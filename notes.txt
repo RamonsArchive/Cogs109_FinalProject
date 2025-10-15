@@ -1,6 +1,10 @@
 Datasets:
-A. df_master_schedule_injury_surface-2019_23_weather_Rmd.csv  NFL-Injury-Analysis/Schedule/df_master_schedule_injury_surface_2019_23_weather_Rmd.csv
+{
+    A. NFL-Injury-Analysis/Schedule/df_master_schedule_injury_surface_2019_23_weather_distance_days_since_last_game.csv
+    B. dataset:  NFL-Injury-Analysis/Data/contact_noncontact_2019_2020_full_seasons.csv
+}
 
+// Gamelevel model is prediciting number of injures and type based on field/game specificaitons 
 GameLevel: {
     {
         predictor: game_id (connector)
@@ -38,17 +42,21 @@ GameLevel: {
     }
     
 }
+
+
+// constributed to 2019 - 2020 season
+// predict injuires based on player specifications that can help lead to better policy decitions not just game predictors 
 PlayerSpecific: {
     {
-        predcitor: position
-        dataset: 
+        predictor: injury (type)
+        dataset: B
     },
     {
-        predicotr: injury (type)
-        dataset:
-    },
+        predictor: contact (yes / no)
+        dataset: B
+    }, 
     {
-        predicotr: contact (yes / no)
-        dataset:
+        predicotr: role
+        dataset: B
     }
 }
