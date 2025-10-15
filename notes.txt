@@ -1,0 +1,54 @@
+Datasets:
+A. df_master_schedule_injury_surface-2019_23_weather_Rmd.csv
+
+GameLevel: {
+    {
+        predictor: game_id (connector)
+        dataset: A
+    },
+    {
+        predictor: turf,
+        dataset: A
+
+    },
+    {
+        predictor: temperature,
+        dataset: A
+
+    },
+    {
+        predictor: day,
+        dataset: A
+    }
+    {
+        predictor: week,
+        dataset: A
+    },
+    {
+        predictor: season,
+        dataset: A
+    },
+    {
+        predictor: stadium
+        dataset: A
+    }, 
+    {
+        predictor: numOfInjuries
+        dataset: A
+    }
+    
+}
+PlayerSpecific: {
+    {
+        predcitor: position
+        dataset: 
+    },
+    {
+        predicotr: injury (type)
+        dataset:
+    },
+    {
+        predicotr: contact (yes / no)
+        dataset:
+    }
+}
