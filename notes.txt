@@ -37,7 +37,7 @@ GameLevel: {
         dataset: A
     }, 
     {
-        predictor: numOfInjuries
+        predictor: num_injuries
         dataset: A
     }
     
@@ -60,3 +60,6 @@ PlayerSpecific: {
         dataset: B
     }
 }
+
+
+// this game_id 2020_SuperBowl_KC_TB is mapped to game nubmer 21 of this year. 2020_21_KC_TB 
