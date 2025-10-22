@@ -63,3 +63,4 @@ PlayerSpecific: {
 
 
 // this game_id 2020_SuperBowl_KC_TB is mapped to game nubmer 21 of this year. 2020_21_KC_TB 
+* We could use PlayerSpecific to infer based on the game condtions and num of injures in that set, what type of injuires we'd recieve in the game.
