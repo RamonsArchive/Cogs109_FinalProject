@@ -11,19 +11,18 @@ GameLevel: {
         dataset: A
     },
     {
-        predictor: turf,
+        predictor: surface_type,
         dataset: A
 
     },
     {
-        predictor: temperature,
+        predictor: Avg_Temp,
         dataset: A
-
     },
     {
         predictor: day,
         dataset: A
-    }
+    },
     {
         predictor: week,
         dataset: A
@@ -33,15 +32,25 @@ GameLevel: {
         dataset: A
     },
     {
-        predictor: stadium
+        predictor: stadium,
         dataset: A
     }, 
     {
-        predictor: num_injuries
+        predictor: num_injuries,
+        dataset: A
+    },
+    {
+        predictor: surface,
+        dataset: A
+    },
+    {
+        predictor: dome,
         dataset: A
     }
-    
+   
 }
+
+// 
 
 
 // constributed to 2019 - 2020 season
@@ -56,7 +65,7 @@ PlayerSpecific: {
         dataset: B
     }, 
     {
-        predicotr: role
+        predictor: role
         dataset: B
     }
 }
