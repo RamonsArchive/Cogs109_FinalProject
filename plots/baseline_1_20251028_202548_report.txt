@@ -1,0 +1,46 @@
+
+======================================================================
+
+MODEL REPORT: baseline (Model 1)
+======================================================================
+Timestamp: 2025-10-28 20:25:51
+
+PREDICTORS (8):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Poisson Deviance: 1.5118
+  • MSE:              4.0050
+  • RMSE:             2.0013
+  • MAE:              1.5893
+
+TEST SET RESULTS:
+  • Poisson Deviance: 1.6248
+  • MSE:              4.2712
+  • RMSE:             2.0667
+  • MAE:              1.6103
+
+GENERALIZATION (Test/CV ratio):
+  • Poisson Dev:      1.0748
+  • MSE:              1.0664
+  • MAE:              1.0132
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.0452
+  • Mean Actual:      2.90
+  • Mean Predicted:   3.00
+  • Actual Range:     10.00
+  • Predicted Range:  0.86
+
+MODEL INTERPRETATION:
+  • R² = 4.5% means the model explains 4.5% of variance
+  • Predictions range from 2.54 to 3.40
+  • Actual injuries range from 0 to 10
+
+⚠️  WARNING: Very low R² (0.0452)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+======================================================================
