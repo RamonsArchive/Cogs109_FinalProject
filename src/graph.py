@@ -18,6 +18,111 @@ from sklearn.metrics import (
 sns.set_style("whitegrid")
 
 
+def exploratory_data_analysis(
+    df: pd.DataFrame, log_df: pd.DataFrame, target_column: str
+):
+    """Create side-by-side comparison of original vs log-transformed distributions"""
+
+    print(f"\n{'='*70}")
+    print("📊 EXPLORATORY DATA ANALYSIS")
+    print(f"{'='*70}\n")
+
+    # Create output directory
+    output_dir = Path("plots")
+    output_dir.mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Create single figure with both subplots
+    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+    # Original distribution
+    axes[0].hist(df[target_column], bins=50, color="blue", alpha=0.7, edgecolor="black")
+    axes[0].axvline(
+        df[target_column].mean(),
+        color="red",
+        linestyle="--",
+        linewidth=2,
+        label=f"Mean: {df[target_column].mean():.2f}",
+    )
+    axes[0].axvline(
+        df[target_column].median(),
+        color="orange",
+        linestyle=":",
+        linewidth=2,
+        label=f"Median: {df[target_column].median():.0f}",
+    )
+    axes[0].set_title(
+        f"Distribution of {target_column} (Original)", fontsize=14, fontweight="bold"
+    )
+    axes[0].set_xlabel("Number of Injuries", fontsize=12)
+    axes[0].set_ylabel("Frequency", fontsize=12)
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+
+    # Log-transformed distribution
+    axes[1].hist(
+        log_df[target_column], bins=50, color="red", alpha=0.7, edgecolor="black"
+    )
+    axes[1].axvline(
+        log_df[target_column].mean(),
+        color="blue",
+        linestyle="--",
+        linewidth=2,
+        label=f"Mean: {log_df[target_column].mean():.2f}",
+    )
+    axes[1].axvline(
+        log_df[target_column].median(),
+        color="orange",
+        linestyle=":",
+        linewidth=2,
+        label=f"Median: {log_df[target_column].median():.2f}",
+    )
+    axes[1].set_title(
+        f"Distribution of {target_column} (Log-Transformed)",
+        fontsize=14,
+        fontweight="bold",
+    )
+    axes[1].set_xlabel("log1p(Number of Injuries)", fontsize=12)
+    axes[1].set_ylabel("Frequency", fontsize=12)
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+
+    plt.suptitle(
+        "Target Variable Analysis: Original vs Log-Transformed",
+        fontsize=16,
+        fontweight="bold",
+    )
+    plt.tight_layout()
+
+    # Save instead of show
+    filename = output_dir / f"eda_distributions_{timestamp}.png"
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"✓ Saved EDA plot: {filename}")
+    plt.close()  # ✅ Close the figure to free memory
+
+    # Print statistics
+    print(f"\n{'='*50}")
+    print("ORIGINAL DISTRIBUTION STATS:")
+    print(f"{'='*50}")
+    print(f"Mean:     {df[target_column].mean():.2f}")
+    print(f"Median:   {df[target_column].median():.0f}")
+    print(f"Std Dev:  {df[target_column].std():.2f}")
+    print(f"Min:      {df[target_column].min():.0f}")
+    print(f"Max:      {df[target_column].max():.0f}")
+    print(f"Skewness: {df[target_column].skew():.2f}")
+
+    print(f"\n{'='*50}")
+    print("LOG-TRANSFORMED DISTRIBUTION STATS:")
+    print(f"{'='*50}")
+    print(f"Mean:     {log_df[target_column].mean():.2f}")
+    print(f"Median:   {log_df[target_column].median():.2f}")
+    print(f"Std Dev:  {log_df[target_column].std():.2f}")
+    print(f"Min:      {log_df[target_column].min():.2f}")
+    print(f"Max:      {log_df[target_column].max():.2f}")
+    print(f"Skewness: {log_df[target_column].skew():.2f}")
+    print(f"{'='*50}\n")
+
+
 def graph_model(
     model_results: dict,
     results_name: str,
@@ -70,6 +175,10 @@ def graph_model(
     y_pred = np.array(model_results["y_pred"])
     df = model_results["df"]
     predictors = model_results["predictors"]
+    model_type = model_results.get("model_type", "poisson")  # ✅ Get model type
+    is_log_target = model_results.get(
+        "is_log_target", False
+    )  # ✅ Check if log-transformed
 
     actual_mean = y_test.mean()
     pred_mean = y_pred.mean()
@@ -77,12 +186,31 @@ def graph_model(
     # ========== 1. METRICS BAR CHART ==========
     fig1, axes = plt.subplots(1, 3, figsize=(15, 4))
 
-    metrics = ["poisson_dev", "mse", "mae"]
-    titles = ["Poisson Deviance", "MSE", "MAE"]
+    # ✅ Adjust metrics based on model type
+    if model_type == "poisson":
+        metrics = ["poisson_dev", "mse", "mae"]
+        titles = ["Poisson Deviance", "MSE", "MAE"]
+    else:  # linear/ridge
+        metrics = ["mse", "mae", "primary_metric"]
+        titles = ["MSE", "MAE", "Primary Metric (MSE)"]
 
     for ax, metric, title in zip(axes, metrics, titles):
-        cv_val = results[f"val_{metric}"]
-        test_val = results[f"test_{metric}"]
+        # ✅ Handle missing Poisson deviance for linear models
+        if metric == "poisson_dev" and model_type != "poisson":
+            ax.text(
+                0.5,
+                0.5,
+                "N/A for Linear Model",
+                ha="center",
+                va="center",
+                fontsize=14,
+                transform=ax.transAxes,
+            )
+            ax.set_title(title, fontsize=13, fontweight="bold")
+            continue
+
+        cv_val = results.get(f"val_{metric}", 0)
+        test_val = results.get(f"test_{metric}", 0)
 
         x = ["CV", "Test"]
         y = [cv_val, test_val]
@@ -106,23 +234,27 @@ def graph_model(
             )
 
         # Add percentage difference
-        pct_diff = ((test_val - cv_val) / cv_val) * 100
-        diff_text = f"Test vs CV: {pct_diff:+.1f}%"
-        color = "lightcoral" if pct_diff > 10 else "lightgreen"
-        ax.text(
-            0.5,
-            0.95,
-            diff_text,
-            transform=ax.transAxes,
-            ha="center",
-            va="top",
-            fontsize=9,
-            bbox=dict(boxstyle="round", facecolor=color, alpha=0.5),
-        )
+        if cv_val > 0:
+            pct_diff = ((test_val - cv_val) / cv_val) * 100
+            diff_text = f"Test vs CV: {pct_diff:+.1f}%"
+            color = "lightcoral" if pct_diff > 10 else "lightgreen"
+            ax.text(
+                0.5,
+                0.95,
+                diff_text,
+                transform=ax.transAxes,
+                ha="center",
+                va="top",
+                fontsize=9,
+                bbox=dict(boxstyle="round", facecolor=color, alpha=0.5),
+            )
 
     title_prefix = "⭐ BEST MODEL - " if is_best else ""
+    model_type_label = f"({model_type.upper()}" + (
+        " - Log Target)" if is_log_target else ")"
+    )
     plt.suptitle(
-        f"{title_prefix}Model Performance: {display_name}",
+        f"{title_prefix}Model Performance: {display_name} {model_type_label}",
         fontsize=16,
         fontweight="bold",
     )
@@ -358,6 +490,7 @@ def graph_model(
     plt.close()
 
     # ========== 5. CLASSIFICATION METRICS (if requested) ==========
+
     if add_classification_metrics:
         print(
             f"\n📊 Creating classification metrics with threshold: {injury_threshold}+ injuries..."
@@ -366,109 +499,156 @@ def graph_model(
         # Convert to binary classification
         y_test_binary = (y_test >= injury_threshold).astype(int)
         y_pred_binary = (y_pred >= injury_threshold).astype(int)
-        y_pred_proba = y_pred / y_pred.max()  # Normalize as proxy for probability
 
-        # 5a. Confusion Matrix and ROC Curve
-        fig5, axes = plt.subplots(1, 2, figsize=(15, 6))
+        # Check if we have both classes
+        unique_test = np.unique(y_test_binary)
+        unique_pred = np.unique(y_pred_binary)
 
-        cm = confusion_matrix(y_test_binary, y_pred_binary)
-
-        # Plot confusion matrix
-        sns.heatmap(
-            cm,
-            annot=True,
-            fmt="d",
-            cmap="Blues",
-            ax=axes[0],
-            xticklabels=[f"<{injury_threshold}", f"{injury_threshold}+"],
-            yticklabels=[f"<{injury_threshold}", f"{injury_threshold}+"],
-            cbar_kws={"label": "Count"},
-        )
-        axes[0].set_ylabel("True Label", fontsize=12)
-        axes[0].set_xlabel("Predicted Label", fontsize=12)
-        axes[0].set_title(
-            f"Confusion Matrix\n(Threshold: {injury_threshold}+ injuries)",
-            fontsize=13,
-            fontweight="bold",
-        )
-
-        # Add metrics to confusion matrix
-        tn, fp, fn, tp = cm.ravel()
-        accuracy = (tp + tn) / (tp + tn + fp + fn)
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-        f1 = (
-            2 * (precision * recall) / (precision + recall)
-            if (precision + recall) > 0
-            else 0
-        )
-
-        metrics_text = (
-            f"Accuracy: {accuracy:.3f}\n"
-            f"Precision: {precision:.3f}\n"
-            f"Recall: {recall:.3f}\n"
-            f"F1-Score: {f1:.3f}"
-        )
-        props = dict(boxstyle="round", facecolor="wheat", alpha=0.8)
-        axes[0].text(
-            1.5, -0.3, metrics_text, fontsize=11, bbox=props, fontweight="bold"
-        )
-
-        # 5b. ROC Curve
-        fpr, tpr, thresholds = roc_curve(y_test_binary, y_pred_proba)
-        roc_auc = auc(fpr, tpr)
-
-        axes[1].plot(
-            fpr,
-            tpr,
-            color="darkorange",
-            lw=2.5,
-            label=f"ROC curve (AUC = {roc_auc:.3f})",
-        )
-        axes[1].plot(
-            [0, 1],
-            [0, 1],
-            color="navy",
-            lw=2,
-            linestyle="--",
-            label="Random Classifier",
-        )
-        axes[1].set_xlim([0.0, 1.0])
-        axes[1].set_ylim([0.0, 1.05])
-        axes[1].set_xlabel("False Positive Rate", fontsize=12)
-        axes[1].set_ylabel("True Positive Rate", fontsize=12)
-        axes[1].set_title(
-            f"ROC Curve\n(Threshold: {injury_threshold}+ injuries)",
-            fontsize=13,
-            fontweight="bold",
-        )
-        axes[1].legend(loc="lower right", fontsize=11)
-        axes[1].grid(True, alpha=0.3)
-
-        plt.suptitle(
-            f"{title_prefix}Classification Metrics: {display_name}",
-            fontsize=15,
-            fontweight="bold",
-        )
-        plt.tight_layout()
-
-        filename5 = output_dir / f"{file_prefix}_{timestamp}_classification.png"
-        plt.savefig(filename5, dpi=300, bbox_inches="tight")
-        print(f"✓ Saved: {filename5}")
-        plt.close()
-
-        # Print classification report
-        print(f"\n📋 Classification Report (Threshold: {injury_threshold}+):")
-        print(
-            classification_report(
-                y_test_binary,
-                y_pred_binary,
-                target_names=[
-                    f"<{injury_threshold} injuries",
-                    f"{injury_threshold}+ injuries",
-                ],
+        if len(unique_test) < 2:
+            print(
+                f"⚠️  Skipping classification metrics: All test samples are in the same class"
             )
-        )
+            print(f"   Test class distribution: {np.bincount(y_test_binary)}")
+        elif len(unique_pred) < 2:
+            print(
+                f"⚠️  Skipping classification metrics: All predictions are in the same class"
+            )
+            print(f"   Prediction class distribution: {np.bincount(y_pred_binary)}")
+        else:
+            # Normalize as proxy for probability
+            if y_pred.max() > 0:
+                y_pred_proba = y_pred / y_pred.max()
+            else:
+                y_pred_proba = y_pred
+
+            # 5a. Confusion Matrix and ROC Curve
+            fig5, axes = plt.subplots(1, 2, figsize=(15, 6))
+
+            cm = confusion_matrix(y_test_binary, y_pred_binary)
+
+            # ✅ Check confusion matrix shape
+            if cm.shape == (2, 2):
+                # Plot confusion matrix
+                sns.heatmap(
+                    cm,
+                    annot=True,
+                    fmt="d",
+                    cmap="Blues",
+                    ax=axes[0],
+                    xticklabels=[f"<{injury_threshold}", f"{injury_threshold}+"],
+                    yticklabels=[f"<{injury_threshold}", f"{injury_threshold}+"],
+                    cbar_kws={"label": "Count"},
+                )
+                axes[0].set_ylabel("True Label", fontsize=12)
+                axes[0].set_xlabel("Predicted Label", fontsize=12)
+                axes[0].set_title(
+                    f"Confusion Matrix\n(Threshold: {injury_threshold}+ injuries)",
+                    fontsize=13,
+                    fontweight="bold",
+                )
+
+                # Add metrics to confusion matrix
+                tn, fp, fn, tp = cm.ravel()
+                accuracy = (tp + tn) / (tp + tn + fp + fn)
+                precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+                recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+                f1 = (
+                    2 * (precision * recall) / (precision + recall)
+                    if (precision + recall) > 0
+                    else 0
+                )
+
+                metrics_text = (
+                    f"Accuracy: {accuracy:.3f}\n"
+                    f"Precision: {precision:.3f}\n"
+                    f"Recall: {recall:.3f}\n"
+                    f"F1-Score: {f1:.3f}"
+                )
+                props = dict(boxstyle="round", facecolor="wheat", alpha=0.8)
+                axes[0].text(
+                    1.5, -0.3, metrics_text, fontsize=11, bbox=props, fontweight="bold"
+                )
+
+                # 5b. ROC Curve
+                try:
+                    fpr, tpr, thresholds = roc_curve(y_test_binary, y_pred_proba)
+                    roc_auc = auc(fpr, tpr)
+
+                    axes[1].plot(
+                        fpr,
+                        tpr,
+                        color="darkorange",
+                        lw=2.5,
+                        label=f"ROC curve (AUC = {roc_auc:.3f})",
+                    )
+                    axes[1].plot(
+                        [0, 1],
+                        [0, 1],
+                        color="navy",
+                        lw=2,
+                        linestyle="--",
+                        label="Random Classifier",
+                    )
+                    axes[1].set_xlim([0.0, 1.0])
+                    axes[1].set_ylim([0.0, 1.05])
+                    axes[1].set_xlabel("False Positive Rate", fontsize=12)
+                    axes[1].set_ylabel("True Positive Rate", fontsize=12)
+                    axes[1].set_title(
+                        f"ROC Curve\n(Threshold: {injury_threshold}+ injuries)",
+                        fontsize=13,
+                        fontweight="bold",
+                    )
+                    axes[1].legend(loc="lower right", fontsize=11)
+                    axes[1].grid(True, alpha=0.3)
+                except Exception as e:
+                    print(f"⚠️  Could not generate ROC curve: {e}")
+                    axes[1].text(
+                        0.5,
+                        0.5,
+                        f"ROC curve unavailable\n{str(e)}",
+                        ha="center",
+                        va="center",
+                        fontsize=12,
+                        transform=axes[1].transAxes,
+                    )
+
+                plt.suptitle(
+                    f"{title_prefix}Classification Metrics: {display_name}",
+                    fontsize=15,
+                    fontweight="bold",
+                )
+                plt.tight_layout()
+
+                filename5 = output_dir / f"{file_prefix}_{timestamp}_classification.png"
+                plt.savefig(filename5, dpi=300, bbox_inches="tight")
+                print(f"✓ Saved: {filename5}")
+                plt.close()
+
+                # Print classification report
+                print(f"\n📋 Classification Report (Threshold: {injury_threshold}+):")
+                try:
+                    print(
+                        classification_report(
+                            y_test_binary,
+                            y_pred_binary,
+                            target_names=[
+                                f"<{injury_threshold} injuries",
+                                f"{injury_threshold}+ injuries",
+                            ],
+                            zero_division=0,
+                        )
+                    )
+                except Exception as e:
+                    print(f"⚠️  Could not generate classification report: {e}")
+
+            else:
+                # Confusion matrix is not 2x2 (missing a class)
+                print(
+                    f"⚠️  Skipping classification metrics: Confusion matrix shape is {cm.shape}"
+                )
+                print(f"   Expected (2,2) but model only predicts one class")
+                print(f"   Test distribution: {np.bincount(y_test_binary)}")
+                print(f"   Pred distribution: {np.bincount(y_pred_binary)}")
 
     # ========== 6. DATA DISTRIBUTION (only for first model or best) ==========
     if model_number == 1 or is_best:
@@ -594,6 +774,8 @@ def graph_model(
         actual_mean,
         pred_mean,
         is_best,
+        model_type=model_type,  # ✅ Add parameter
+        is_log_target=is_log_target,
     )
 
     report_file = output_dir / f"{file_prefix}_{timestamp}_report.txt"
@@ -616,14 +798,21 @@ def generate_text_report(
     actual_mean,
     pred_mean,
     is_best=False,
+    model_type="poisson",
+    is_log_target=False,
 ):
     """Generate detailed text report"""
     best_marker = "⭐ BEST MODEL ⭐" if is_best else ""
+
+    model_type_label = f"{model_type.upper()}"
+    if is_log_target:
+        model_type_label += " (Log-Transformed Target)"
 
     report = f"""
 {'='*70}
 {best_marker}
 MODEL REPORT: {display_name}
+MODEL TYPE: {model_type_label}
 {'='*70}
 Timestamp: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
@@ -631,24 +820,64 @@ PREDICTORS ({len(predictors)}):
 {', '.join(predictors)}
 
 CROSS-VALIDATION RESULTS (10-fold):
-  • Poisson Deviance: {results['val_poisson_dev']:.4f}
-  • MSE:              {results['val_mse']:.4f}
+"""
+
+    # Add Poisson deviance only for Poisson models
+    if model_type == "poisson" and "val_poisson_dev" in results:
+        report += f"  • Poisson Deviance: {results['val_poisson_dev']:.4f}\n"
+
+    report += f"""  • MSE:              {results['val_mse']:.4f}
   • RMSE:             {np.sqrt(results['val_mse']):.4f}
   • MAE:              {results['val_mae']:.4f}
 
 TEST SET RESULTS:
-  • Poisson Deviance: {results['test_poisson_dev']:.4f}
-  • MSE:              {results['test_mse']:.4f}
+"""
+
+    # Add Poisson deviance only for Poisson models
+    if model_type == "poisson" and "test_poisson_dev" in results:
+        report += f"  • Poisson Deviance: {results['test_poisson_dev']:.4f}\n"
+
+    report += f"""  • MSE:              {results['test_mse']:.4f}
   • RMSE:             {np.sqrt(results['test_mse']):.4f}
   • MAE:              {results['test_mae']:.4f}
 
 GENERALIZATION (Test/CV ratio):
-  • Poisson Dev:      {results['test_poisson_dev']/results['val_poisson_dev']:.4f}
-  • MSE:              {results['test_mse']/results['val_mse']:.4f}
-  • MAE:              {results['test_mae']/results['val_mae']:.4f}
+"""
+
+    # Add Poisson dev ratio only for Poisson models
+    if (
+        model_type == "poisson"
+        and "val_poisson_dev" in results
+        and "test_poisson_dev" in results
+    ):
+        poisson_ratio = results["test_poisson_dev"] / results["val_poisson_dev"]
+        report += f"  • Poisson Dev:      {poisson_ratio:.4f}\n"
+
+    mse_ratio = results["test_mse"] / results["val_mse"]
+    mae_ratio = results["test_mae"] / results["val_mae"]
+
+    report += f"""  • MSE:              {mse_ratio:.4f}
+  • MAE:              {mae_ratio:.4f}
   
   Note: Ratio > 1.1 suggests overfitting
 """
+
+    # Inside your linear model evaluation/reporting:
+    if is_log_target:
+        # Convert back to original scale
+        y_test_original = np.expm1(y_test)  # inverse of log1p
+        y_pred_original = np.maximum(np.expm1(y_pred), 0)  # clip negatives to 0
+
+        # Calculate metrics in original scale
+        original_rmse = np.sqrt(mean_squared_error(y_test_original, y_pred_original))
+        original_mae = mean_absolute_error(y_test_original, y_pred_original)
+        original_r2 = r2_score(y_test_original, y_pred_original)
+
+        print(f"\n[ORIGINAL SCALE METRICS]")
+        print(f"RMSE: {original_rmse:.4f} injuries")
+        print(f"MAE: {original_mae:.4f} injuries")
+        print(f"R²: {original_r2:.4f}")
+        print(f"Pred Range: [{y_pred_original.min():.2f}, {y_pred_original.max():.2f}]")
 
     r2 = r2_score(y_test, y_pred)
     pred_range = y_pred.max() - y_pred.min()
@@ -665,9 +894,10 @@ ADDITIONAL METRICS:
 MODEL INTERPRETATION:
   • R² = {r2:.1%} means the model explains {r2:.1%} of variance
   • Predictions range from {y_pred.min():.2f} to {y_pred.max():.2f}
-  • Actual injuries range from {y_test.min():.0f} to {y_test.max():.0f}
+  • Actual values range from {y_test.min():.2f} to {y_test.max():.2f}
 """
 
+    # Performance warnings
     if r2 < 0.1:
         report += f"""
 ⚠️  WARNING: Very low R² ({r2:.4f})
@@ -675,10 +905,19 @@ MODEL INTERPRETATION:
    - Consider: different features, non-linear models, or interaction terms
 """
 
+    if mse_ratio > 1.2 or mae_ratio > 1.2:
+        report += f"""
+⚠️  WARNING: Potential overfitting detected
+   - Test error is significantly higher than CV error
+   - MSE ratio: {mse_ratio:.2f}, MAE ratio: {mae_ratio:.2f}
+   - Consider: more regularization, simpler model, or more training data
+"""
+
     if is_best:
+        primary_metric = "Poisson Deviance" if model_type == "poisson" else "MSE"
         report += f"""
 {'='*70}
-🎯 This is the BEST model based on 10-fold CV Poisson Deviance
+🎯 This is the BEST model based on 10-fold CV {primary_metric}
    - Retrained on full 80/20 train/test split
    - Use this model for final predictions
 {'='*70}

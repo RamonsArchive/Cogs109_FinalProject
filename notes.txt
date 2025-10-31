@@ -4,6 +4,8 @@ Datasets:
     B. dataset:  NFL-Injury-Analysis/Data/contact_noncontact_2019_2020_full_seasons.csv
 }
 
+# TODO: use multiple linear regression on transformed Y
+
 // Gamelevel model is prediciting number of injures and type based on field/game specificaitons 
 GameLevel: {
     {

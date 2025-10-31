@@ -1,9 +1,11 @@
 import os
 from load import load_data
 from clean import clean_data
+from clean import log_transform_data
 from model import train_model, use_best_model
-from graph import graph_model
+from graph import graph_model, exploratory_data_analysis
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -12,12 +14,19 @@ def main():
         curr_dir,
         "../datasets/df_master_schedule_injury_surface_2019_23_weather_distance_days_since_last_game.csv",
     )
-
-    results = {}
-
     # Define all predictor sets to test
     Poisson_Regression_Predictors = [
         # Model 1: Baseline
+        [
+            "surface_type",
+            "day",
+            "week",
+            "season",
+            "stadium",
+            "surface",
+            "dome",
+        ],
+        # Model 2: Add Avg_Temp
         [
             "surface_type",
             "Avg_Temp",
@@ -28,7 +37,7 @@ def main():
             "surface",
             "dome",
         ],
-        # Model 2: Add game intensity metrics
+        # Model 3: Add game intensity metrics
         [
             "surface_type",
             "Avg_Temp",
@@ -44,7 +53,7 @@ def main():
             "tov_w",
             "tov_l",
         ],
-        # Model 3: Add rest/travel factors
+        # Model 4: Add rest/travel factors
         [
             "surface_type",
             "Avg_Temp",
@@ -58,7 +67,7 @@ def main():
             "AWAY_day_since_last_game",
             "distance_miles",
         ],
-        # Model 4: Add weather conditions
+        # Model 5: Add weather conditions
         [
             "surface_type",
             "Avg_Temp",
@@ -72,7 +81,7 @@ def main():
             "surface",
             "dome",
         ],
-        # Model 5: Kitchen sink (all potentially relevant features)
+        # Model 6: Kitchen sink (all potentially relevant features)
         [
             "surface_type",
             "Avg_Temp",
@@ -98,62 +107,107 @@ def main():
 
     model_names = [
         "baseline",
+        "Avg_Temp",
         "game_intensity",
         "rest_travel",
         "weather",
-        "kitchen_sink",
+        "kitchen_sink_all",
+    ]
+
+    log_model_names = [
+        "baseline_log",
+        "Avg_Temp_log",
+        "game_intensity_log",
+        "rest_travel_log",
+        "weather_log",
+        "kitchen_sink_all_log",
     ]
 
     # Load data once
     df = load_data(data_dir)
     df = clean_data(df)
 
-    # Track CV errors for each model
-    err_k10 = []
+    target_column = "num_injuries"
+    log_df = log_transform_data(df, target_column)
 
+    exploratory_data_analysis(df, log_df, target_column)
+
+    # POISSON MODELS on original counts
     print("\n" + "=" * 70)
-    print("PHASE 1: Training and Evaluating All Models")
+    print("TRAINING POISSON REGRESSION MODELS (Count Data)")
     print("=" * 70)
+    poisson_results = {}
+    poisson_errors = []
 
-    # Train all models with 10-fold CV
     for i, (model_name, predictors) in enumerate(
         zip(model_names, Poisson_Regression_Predictors), 1
     ):
-        result_model = train_model(df, predictors, results, model_name)
-        err_k10.append(
-            result_model["10foldCV"]["val_poisson_dev"]
-        )  # Use CV error for selection
+        result_model = train_model(
+            df,
+            predictors,
+            poisson_results,
+            model_name,
+            model_type="poisson",
+            is_log_target=False,
+        )
+        poisson_errors.append(result_model["10foldCV"]["val_primary_metric"])
         graph_model(result_model, model_name, model_number=i)
 
-    # Print comparison table
+    # LINEAR REGRESSION MODELS on log-transformed target
     print("\n" + "=" * 70)
-    print("MODEL COMPARISON (10-fold CV Poisson Deviance)")
+    print("TRAINING LINEAR REGRESSION MODELS (Log-Transformed Target)")
     print("=" * 70)
-    for i, (name, error) in enumerate(zip(model_names, err_k10), 1):
-        marker = " ⭐ BEST" if error == min(err_k10) else ""
-        print(f"Model {i} ({name:20s}): {error:.4f}{marker}")
-    print("=" * 70)
+    linear_results = {}
+    linear_errors = []
 
-    # Select and retrain best model
-    print("\n" + "=" * 70)
-    print("PHASE 2: Retraining Best Model on Full Split")
-    print("=" * 70)
+    for i, (log_model_name, predictors) in enumerate(
+        zip(log_model_names, Poisson_Regression_Predictors), 1
+    ):
+        result_model = train_model(
+            log_df,
+            predictors,
+            linear_results,
+            log_model_name,
+            model_type="linear",
+            is_log_target=True,
+        )
+        linear_errors.append(result_model["10foldCV"]["val_primary_metric"])
+        graph_model(result_model, log_model_name, model_number=i)
 
-    best_model_results = use_best_model(
-        results, df, err_k10, Poisson_Regression_Predictors
+    # Select best from each approach
+    best_poisson = use_best_model(
+        poisson_results,
+        df,
+        poisson_errors,
+        Poisson_Regression_Predictors,
+        model_type="poisson",
+        is_log_target=False,
     )
 
+    best_linear = use_best_model(
+        linear_results,
+        log_df,
+        linear_errors,
+        Poisson_Regression_Predictors,
+        model_type="linear",
+        is_log_target=True,
+    )
     # Get the best model name
-    best_idx = best_model_results["best_model_idx"]
-    best_name = model_names[best_idx]
+    best_poisson_idx = best_poisson["best_model_idx"]
+    best_poisson_name = model_names[best_poisson_idx]
+
+    best_log_idx = best_linear["best_model_idx"]
+    best_log_name = log_model_names[best_log_idx]
 
     # Graph the best model with special labeling
-    graph_model(best_model_results, best_name, is_best=True)
+    graph_model(best_poisson, best_poisson_name, is_best=True)
+    graph_model(best_linear, best_log_name, is_best=True)
 
     print("\n" + "=" * 70)
     print("✅ ALL DONE!")
     print("=" * 70)
-    print(f"Best model: {best_name} (Model {best_idx + 1})")
+    print(f"Best model: {best_poisson_name} (Model {best_poisson_idx + 1})")
+    print(f"Best log model: {best_log_name} (Model {best_log_idx + 1})")
     print(f"Check the 'plots/' directory for all visualizations")
     print("=" * 70 + "\n")
 

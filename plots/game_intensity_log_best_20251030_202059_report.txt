@@ -1,0 +1,46 @@
+
+======================================================================
+⭐ BEST MODEL ⭐
+MODEL REPORT: game_intensity_log (BEST MODEL)
+MODEL TYPE: LINEAR (Log-Transformed Target)
+======================================================================
+Timestamp: 2025-10-30 20:21:00
+
+PREDICTORS (13):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              0.2825
+  • RMSE:             0.5315
+  • MAE:              0.4093
+
+TEST SET RESULTS:
+  • MSE:              0.2638
+  • RMSE:             0.5136
+  • MAE:              0.3884
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              0.9335
+  • MAE:              0.9490
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.2768
+  • Mean Actual:      1.20
+  • Mean Predicted:   1.22
+  • Actual Range:     2.40
+  • Predicted Range:  1.92
+
+MODEL INTERPRETATION:
+  • R² = 27.7% means the model explains 27.7% of variance
+  • Predictions range from -0.18 to 1.74
+  • Actual values range from 0.00 to 2.40
+
+======================================================================
+🎯 This is the BEST model based on 10-fold CV MSE
+   - Retrained on full 80/20 train/test split
+   - Use this model for final predictions
+======================================================================
+
+======================================================================

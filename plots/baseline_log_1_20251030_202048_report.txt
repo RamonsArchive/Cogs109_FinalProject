@@ -1,0 +1,40 @@
+
+======================================================================
+
+MODEL REPORT: baseline_log (Model 1)
+MODEL TYPE: LINEAR (Log-Transformed Target)
+======================================================================
+Timestamp: 2025-10-30 20:20:50
+
+PREDICTORS (7):
+surface_type, day, week, season, stadium, surface, dome
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              0.2849
+  • RMSE:             0.5338
+  • MAE:              0.4132
+
+TEST SET RESULTS:
+  • MSE:              0.2832
+  • RMSE:             0.5322
+  • MAE:              0.3987
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              0.9941
+  • MAE:              0.9649
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.2234
+  • Mean Actual:      1.20
+  • Mean Predicted:   1.23
+  • Actual Range:     2.40
+  • Predicted Range:  2.02
+
+MODEL INTERPRETATION:
+  • R² = 22.3% means the model explains 22.3% of variance
+  • Predictions range from -0.27 to 1.75
+  • Actual values range from 0.00 to 2.40
+
+======================================================================
