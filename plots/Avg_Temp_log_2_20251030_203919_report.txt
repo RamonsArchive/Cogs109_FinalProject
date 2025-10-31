@@ -4,7 +4,7 @@
 MODEL REPORT: Avg_Temp_log (Model 2)
 MODEL TYPE: LINEAR (Log-Transformed Target)
 ======================================================================
-Timestamp: 2025-10-30 20:20:52
+Timestamp: 2025-10-30 20:39:20
 
 PREDICTORS (8):
 surface_type, Avg_Temp, day, week, season, stadium, surface, dome
@@ -25,6 +25,14 @@ GENERALIZATION (Test/CV ratio):
   
   Note: Ratio > 1.1 suggests overfitting
 
+        ORIGINAL SCALE METRICS:
+        Mean: 2.57 injuries
+        MSE: 4.1151 injuries
+        RMSE: 2.0286 injuries
+        MAE: 1.4777 injuries
+        R²: 0.0801
+        Pred Range: [0.00, 4.81]
+        
 ADDITIONAL METRICS:
   • R² Score:         0.2247
   • Mean Actual:      1.20

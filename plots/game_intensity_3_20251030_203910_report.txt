@@ -1,43 +1,43 @@
 
 ======================================================================
 
-MODEL REPORT: weather (Model 5)
+MODEL REPORT: game_intensity (Model 3)
 MODEL TYPE: POISSON
 ======================================================================
-Timestamp: 2025-10-30 20:20:46
+Timestamp: 2025-10-30 20:39:12
 
-PREDICTORS (11):
-surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome
+PREDICTORS (13):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l
 
 CROSS-VALIDATION RESULTS (10-fold):
-  • MSE:              4.0017
-  • RMSE:             2.0004
-  • MAE:              1.5924
+  • MSE:              3.9889
+  • RMSE:             1.9972
+  • MAE:              1.5841
 
 TEST SET RESULTS:
-  • MSE:              4.2911
-  • RMSE:             2.0715
-  • MAE:              1.6160
+  • MSE:              4.0996
+  • RMSE:             2.0248
+  • MAE:              1.5795
 
 GENERALIZATION (Test/CV ratio):
-  • MSE:              1.0723
-  • MAE:              1.0148
+  • MSE:              1.0278
+  • MAE:              0.9972
   
   Note: Ratio > 1.1 suggests overfitting
 
 ADDITIONAL METRICS:
-  • R² Score:         0.0407
+  • R² Score:         0.0835
   • Mean Actual:      2.90
   • Mean Predicted:   2.99
   • Actual Range:     10.00
-  • Predicted Range:  1.10
+  • Predicted Range:  1.31
 
 MODEL INTERPRETATION:
-  • R² = 4.1% means the model explains 4.1% of variance
-  • Predictions range from 2.44 to 3.54
+  • R² = 8.4% means the model explains 8.4% of variance
+  • Predictions range from 2.37 to 3.68
   • Actual values range from 0.00 to 10.00
 
-⚠️  WARNING: Very low R² (0.0407)
+⚠️  WARNING: Very low R² (0.0835)
    - Model barely outperforms predicting the mean
    - Consider: different features, non-linear models, or interaction terms
 

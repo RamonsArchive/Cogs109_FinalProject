@@ -4,7 +4,7 @@
 MODEL REPORT: rest_travel_log (Model 4)
 MODEL TYPE: LINEAR (Log-Transformed Target)
 ======================================================================
-Timestamp: 2025-10-30 20:20:54
+Timestamp: 2025-10-30 20:39:23
 
 PREDICTORS (11):
 surface_type, Avg_Temp, day, week, season, stadium, surface, dome, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
@@ -25,6 +25,14 @@ GENERALIZATION (Test/CV ratio):
   
   Note: Ratio > 1.1 suggests overfitting
 
+        ORIGINAL SCALE METRICS:
+        Mean: 2.57 injuries
+        MSE: 4.1109 injuries
+        RMSE: 2.0275 injuries
+        MAE: 1.4830 injuries
+        R²: 0.0810
+        Pred Range: [0.00, 4.50]
+        
 ADDITIONAL METRICS:
   • R² Score:         0.2273
   • Mean Actual:      1.20

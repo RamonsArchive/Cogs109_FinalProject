@@ -4,7 +4,7 @@
 MODEL REPORT: rest_travel (Model 4)
 MODEL TYPE: POISSON
 ======================================================================
-Timestamp: 2025-10-30 20:20:45
+Timestamp: 2025-10-30 20:39:13
 
 PREDICTORS (11):
 surface_type, Avg_Temp, day, week, season, stadium, surface, dome, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles

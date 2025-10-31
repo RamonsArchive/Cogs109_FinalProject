@@ -869,15 +869,28 @@ GENERALIZATION (Test/CV ratio):
         y_pred_original = np.maximum(np.expm1(y_pred), 0)  # clip negatives to 0
 
         # Calculate metrics in original scale
+        original_pred_mean = y_pred_original.mean()
+        original_mse = mean_squared_error(y_test_original, y_pred_original)
         original_rmse = np.sqrt(mean_squared_error(y_test_original, y_pred_original))
         original_mae = mean_absolute_error(y_test_original, y_pred_original)
         original_r2 = r2_score(y_test_original, y_pred_original)
 
         print(f"\n[ORIGINAL SCALE METRICS]")
+        print(f"Mean: {original_pred_mean:.2f} injuries")
+        print(f"MSE: {original_mse:.4f} injuries")
         print(f"RMSE: {original_rmse:.4f} injuries")
         print(f"MAE: {original_mae:.4f} injuries")
         print(f"R²: {original_r2:.4f}")
         print(f"Pred Range: [{y_pred_original.min():.2f}, {y_pred_original.max():.2f}]")
+        report += f"""
+        ORIGINAL SCALE METRICS:
+        Mean: {original_pred_mean:.2f} injuries
+        MSE: {original_mse:.4f} injuries
+        RMSE: {original_rmse:.4f} injuries
+        MAE: {original_mae:.4f} injuries
+        R²: {original_r2:.4f}
+        Pred Range: [{y_pred_original.min():.2f}, {y_pred_original.max():.2f}]
+        """
 
     r2 = r2_score(y_test, y_pred)
     pred_range = y_pred.max() - y_pred.min()

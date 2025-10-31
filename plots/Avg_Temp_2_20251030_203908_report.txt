@@ -4,7 +4,7 @@
 MODEL REPORT: Avg_Temp (Model 2)
 MODEL TYPE: POISSON
 ======================================================================
-Timestamp: 2025-10-30 20:20:41
+Timestamp: 2025-10-30 20:39:10
 
 PREDICTORS (8):
 surface_type, Avg_Temp, day, week, season, stadium, surface, dome

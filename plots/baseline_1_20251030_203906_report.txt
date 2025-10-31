@@ -4,7 +4,7 @@
 MODEL REPORT: baseline (Model 1)
 MODEL TYPE: POISSON
 ======================================================================
-Timestamp: 2025-10-30 20:20:40
+Timestamp: 2025-10-30 20:39:08
 
 PREDICTORS (7):
 surface_type, day, week, season, stadium, surface, dome
