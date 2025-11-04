@@ -4,7 +4,7 @@
 MODEL REPORT: weather_log (Model 5)
 MODEL TYPE: LINEAR (Log-Transformed Target)
 ======================================================================
-Timestamp: 2025-10-30 20:39:25
+Timestamp: 2025-11-03 20:05:02
 
 PREDICTORS (11):
 surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome

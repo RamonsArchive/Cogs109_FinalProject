@@ -4,7 +4,7 @@
 MODEL REPORT: rest_travel_log (Model 4)
 MODEL TYPE: LINEAR (Log-Transformed Target)
 ======================================================================
-Timestamp: 2025-10-30 20:39:23
+Timestamp: 2025-11-03 20:05:01
 
 PREDICTORS (11):
 surface_type, Avg_Temp, day, week, season, stadium, surface, dome, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles

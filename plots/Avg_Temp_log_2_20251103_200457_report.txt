@@ -4,7 +4,7 @@
 MODEL REPORT: Avg_Temp_log (Model 2)
 MODEL TYPE: LINEAR (Log-Transformed Target)
 ======================================================================
-Timestamp: 2025-10-30 20:39:20
+Timestamp: 2025-11-03 20:04:58
 
 PREDICTORS (8):
 surface_type, Avg_Temp, day, week, season, stadium, surface, dome
