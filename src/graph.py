@@ -18,6 +18,73 @@ from sklearn.metrics import (
 sns.set_style("whitegrid")
 
 
+def get_plot_path(model_name: str, model_number: int, is_best: bool, plot_type: str):
+    """
+    Generate organized plot path based on model type and whether it's best.
+
+    Structure:
+    plots/
+      ├── exploratory/      (EDA plots)
+      ├── best/             (Best models from each type)
+      │   └── model_name/
+      └── non_best/         (All other models)
+          └── model_name/
+
+    Args:
+        model_name: Name of the model (e.g., "baseline", "Avg_Temp")
+        model_number: Model number (1-7)
+        is_best: Whether this is the best model
+        plot_type: Type of plot (e.g., "metrics", "scatter", "roc")
+
+    Returns:
+        Path object for the plot file
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Base directory
+    base_dir = Path("plots")
+
+    # Determine subdirectory structure
+    if is_best:
+        # plots/best/model_name/
+        plot_dir = base_dir / "best" / model_name
+    else:
+        # plots/non_best/model_name/
+        plot_dir = base_dir / "non_best" / model_name
+
+    # Create directory
+    plot_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate filename
+    if is_best:
+        filename = f"{model_name}_best_{timestamp}_{plot_type}.png"
+    else:
+        filename = f"{model_name}_{model_number}_{timestamp}_{plot_type}.png"
+
+    return plot_dir / filename
+
+
+def get_report_path(model_name: str, model_number: int, is_best: bool):
+    """Generate path for text report (similar structure to plots)"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    base_dir = Path("plots")
+
+    if is_best:
+        report_dir = base_dir / "best" / model_name
+    else:
+        report_dir = base_dir / "non_best" / model_name
+
+    report_dir.mkdir(parents=True, exist_ok=True)
+
+    if is_best:
+        filename = f"{model_name}_best_{timestamp}_report.txt"
+    else:
+        filename = f"{model_name}_{model_number}_{timestamp}_report.txt"
+
+    return report_dir / filename
+
+
 def exploratory_data_analysis(
     df: pd.DataFrame, log_df: pd.DataFrame, target_column: str
 ):
@@ -189,9 +256,10 @@ def graph_model(
     fig1, axes = plt.subplots(1, 3, figsize=(15, 4))
 
     # ✅ Adjust metrics based on model type
-    if model_type == "poisson":
+    if model_type == "poisson" or model_type == "negbin":
         metrics = ["poisson_dev", "mse", "mae"]
-        titles = ["Poisson Deviance", "MSE", "MAE"]
+        model_label = "Negative Binomial" if model_type == "negbin" else "Poisson"
+        titles = [f"{model_label} Deviance", "MSE", "MAE"]
     elif model_type == "logistic":
         metrics = ["roc_auc", "accuracy", "f1"]
         titles = ["ROC-AUC", "Accuracy", "F1 Score"]
@@ -201,7 +269,7 @@ def graph_model(
 
     for ax, metric, title in zip(axes, metrics, titles):
         # ✅ Handle missing Poisson deviance for linear models
-        if metric == "poisson_dev" and model_type != "poisson":
+        if metric == "poisson_dev" and model_type not in ["poisson", "negbin"]:
             ax.text(
                 0.5,
                 0.5,
@@ -265,7 +333,7 @@ def graph_model(
     )
     plt.tight_layout()
 
-    filename1 = output_dir / f"{file_prefix}_{timestamp}_metrics.png"
+    filename1 = get_plot_path(results_name, model_number, is_best, "metrics")
     plt.savefig(filename1, dpi=300, bbox_inches="tight")
     print(f"✓ Saved: {filename1}")
     plt.close()
@@ -328,7 +396,7 @@ def graph_model(
         )
 
         plt.tight_layout()
-        filename2 = output_dir / f"{file_prefix}_{timestamp}_confusion.png"
+        filename2 = get_plot_path(results_name, model_number, is_best, "confusion")
         plt.savefig(filename2, dpi=300, bbox_inches="tight")
         print(f"✓ Saved: {filename2}")
         plt.close()
@@ -421,7 +489,7 @@ def graph_model(
 
         plt.tight_layout()
 
-        filename2 = output_dir / f"{file_prefix}_{timestamp}_scatter.png"
+        filename2 = get_plot_path(results_name, model_number, is_best, "scatter")
         plt.savefig(filename2, dpi=300, bbox_inches="tight")
         print(f"✓ Saved: {filename2}")
         plt.close()
@@ -494,7 +562,7 @@ def graph_model(
         )
 
         plt.tight_layout()
-        filename_roc = output_dir / f"{file_prefix}_{timestamp}_roc.png"
+        filename_roc = get_plot_path(results_name, model_number, is_best, "roc")
         plt.savefig(filename_roc, dpi=300, bbox_inches="tight")
         print(f"✓ Saved: {filename_roc}")
         plt.close()
@@ -583,7 +651,7 @@ def graph_model(
         )
         plt.tight_layout()
 
-        filename3 = output_dir / f"{file_prefix}_{timestamp}_residuals.png"
+        filename3 = get_plot_path(results_name, model_number, is_best, "residuals")
         plt.savefig(filename3, dpi=300, bbox_inches="tight")
         print(f"✓ Saved: {filename3}")
         plt.close()
@@ -632,7 +700,7 @@ def graph_model(
 
         plt.tight_layout()
 
-        filename4 = output_dir / f"{file_prefix}_{timestamp}_error_by_count.png"
+        filename4 = get_plot_path(results_name, model_number, is_best, "error_by_count")
         plt.savefig(filename4, dpi=300, bbox_inches="tight")
         print(f"✓ Saved: {filename4}")
         plt.close()
@@ -767,7 +835,9 @@ def graph_model(
                 )
                 plt.tight_layout()
 
-                filename5 = output_dir / f"{file_prefix}_{timestamp}_classification.png"
+                filename5 = get_plot_path(
+                    results_name, model_number, is_best, "classification"
+                )
                 plt.savefig(filename5, dpi=300, bbox_inches="tight")
                 print(f"✓ Saved: {filename5}")
                 plt.close()
@@ -907,7 +977,9 @@ def graph_model(
             )
             plt.tight_layout()
 
-            filename6 = output_dir / f"{file_prefix}_{timestamp}_distribution.png"
+            filename6 = get_plot_path(
+                results_name, model_number, is_best, "distribution"
+            )
             plt.savefig(filename6, dpi=300, bbox_inches="tight")
             print(f"✓ Saved: {filename6}")
             plt.close()
@@ -926,14 +998,14 @@ def graph_model(
         is_log_target=is_log_target,
     )
 
-    report_file = output_dir / f"{file_prefix}_{timestamp}_report.txt"
+    report_file = get_report_path(results_name, model_number, is_best)
     with open(report_file, "w") as f:
         f.write(report)
 
     print("\n" + report)
     print(f"✓ Report saved: {report_file}")
     print(f"\n{'='*70}")
-    print(f"All visualizations saved to: {output_dir}/")
+    print(f"All visualizations saved to: {report_file.parent}/")
     print(f"{'='*70}\n")
 
 
@@ -995,9 +1067,14 @@ GENERALIZATION (Test/CV ratio):
   Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
 """
     else:
-        # Add Poisson deviance only for Poisson models
-        if model_type == "poisson" and "val_poisson_dev" in results:
-            report += f"  • Poisson Deviance: {results['val_poisson_dev']:.4f}\n"
+        # Add deviance for Poisson/Negative Binomial models
+        if model_type in ["poisson", "negbin"] and "val_poisson_dev" in results:
+            dev_label = (
+                "Negative Binomial Deviance"
+                if model_type == "negbin"
+                else "Poisson Deviance"
+            )
+            report += f"  • {dev_label}: {results['val_poisson_dev']:.4f}\n"
 
         report += f"""  • MSE:              {results['val_mse']:.4f}
   • RMSE:             {np.sqrt(results['val_mse']):.4f}
@@ -1006,9 +1083,14 @@ GENERALIZATION (Test/CV ratio):
 TEST SET RESULTS:
 """
 
-        # Add Poisson deviance only for Poisson models
-        if model_type == "poisson" and "test_poisson_dev" in results:
-            report += f"  • Poisson Deviance: {results['test_poisson_dev']:.4f}\n"
+        # Add deviance for Poisson/Negative Binomial models
+        if model_type in ["poisson", "negbin"] and "test_poisson_dev" in results:
+            dev_label = (
+                "Negative Binomial Deviance"
+                if model_type == "negbin"
+                else "Poisson Deviance"
+            )
+            report += f"  • {dev_label}: {results['test_poisson_dev']:.4f}\n"
 
         report += f"""  • MSE:              {results['test_mse']:.4f}
   • RMSE:             {np.sqrt(results['test_mse']):.4f}
@@ -1017,14 +1099,15 @@ TEST SET RESULTS:
 GENERALIZATION (Test/CV ratio):
 """
 
-        # Add Poisson dev ratio only for Poisson models
+        # Add deviance ratio for Poisson/Negative Binomial models
         if (
-            model_type == "poisson"
+            model_type in ["poisson", "negbin"]
             and "val_poisson_dev" in results
             and "test_poisson_dev" in results
         ):
-            poisson_ratio = results["test_poisson_dev"] / results["val_poisson_dev"]
-            report += f"  • Poisson Dev:      {poisson_ratio:.4f}\n"
+            dev_ratio = results["test_poisson_dev"] / results["val_poisson_dev"]
+            dev_label = "NegBin Dev" if model_type == "negbin" else "Poisson Dev"
+            report += f"  • {dev_label}:      {dev_ratio:.4f}\n"
 
         mse_ratio = results["test_mse"] / results["val_mse"]
         mae_ratio = results["test_mae"] / results["val_mae"]
@@ -1105,6 +1188,8 @@ MODEL INTERPRETATION:
             primary_metric = "ROC-AUC"
         elif model_type == "poisson":
             primary_metric = "Poisson Deviance"
+        elif model_type == "negbin":
+            primary_metric = "Negative Binomial Deviance"
         else:
             primary_metric = "MSE"
         report += f"""

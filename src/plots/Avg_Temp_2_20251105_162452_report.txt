@@ -1,0 +1,44 @@
+
+======================================================================
+
+MODEL REPORT: Avg_Temp (Model 2)
+MODEL TYPE: POISSON
+======================================================================
+Timestamp: 2025-11-05 16:24:54
+
+PREDICTORS (8):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              4.0050
+  • RMSE:             2.0013
+  • MAE:              1.5893
+
+TEST SET RESULTS:
+  • MSE:              4.2712
+  • RMSE:             2.0667
+  • MAE:              1.6103
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              1.0664
+  • MAE:              1.0132
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.0452
+  • Mean Actual:      2.90
+  • Mean Predicted:   3.00
+  • Actual Range:     10.00
+  • Predicted Range:  0.86
+
+MODEL INTERPRETATION:
+  • R² = 4.5% means the model explains 4.5% of variance
+  • Predictions range from 2.54 to 3.40
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Very low R² (0.0452)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+======================================================================

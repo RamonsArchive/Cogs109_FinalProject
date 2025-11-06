@@ -1,0 +1,35 @@
+
+======================================================================
+
+MODEL REPORT: backward_selected_binary (Model 7)
+MODEL TYPE: LOGISTIC
+======================================================================
+Timestamp: 2025-11-05 16:24:17
+
+PREDICTORS (2):
+week, yds_l
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Accuracy:         0.4807
+  • Precision:        0.2130
+  • Recall:           0.5227
+  • F1 Score:         0.2998
+  • ROC-AUC:          0.5326
+  • Log Loss:         0.6813
+
+TEST SET RESULTS:
+  • Accuracy:         0.3303
+  • Precision:        0.2044
+  • Recall:           0.9024
+  • F1 Score:         0.3333
+  • ROC-AUC:          0.6446
+  • Log Loss:         0.6571
+
+GENERALIZATION (Test/CV ratio):
+  • Accuracy:         0.6871
+  • ROC-AUC:          1.2102
+  • F1 Score:         1.1119
+  
+  Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
+
+======================================================================

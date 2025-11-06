@@ -5,6 +5,8 @@ from clean import clean_data
 from clean import log_transform_data
 from model import train_model, use_best_model
 from graph import graph_model, exploratory_data_analysis
+from exploratory import correlation_analysis
+from feature_selection import backward_selection, compare_models_with_without_selection
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -146,7 +148,55 @@ def main():
     print(f"\n✅ Created binary target: 1 if num_injuries > 4, else 0")
     print(f"   Class distribution: {np.bincount(binary_df[target_column])}")
 
+    # Perform exploratory data analysis
     exploratory_data_analysis(df, log_df, target_column)
+
+    # Perform correlation analysis
+    corr_original, corr_log = correlation_analysis(df, log_df, target_column)
+
+    # ========================================================================
+    # BACKWARD SELECTION - Find optimal features from Model 6 (kitchen sink)
+    # ========================================================================
+    # Run backward selection ONCE on logistic regression (binary classification)
+    # Then apply the selected features to ALL three model types
+    print("\n" + "=" * 70)
+    print("🔍 PERFORMING BACKWARD SELECTION ON MODEL 6")
+    print("=" * 70)
+    print("Using LOGISTIC REGRESSION for feature selection")
+    print(f"Significance level: α = 0.1")
+    print(f"Starting with {len(REGRESSION_PREDICTORS[5])} predictors from Model 6")
+    print("=" * 70 + "\n")
+
+    selected_features = backward_selection(
+        df=binary_df,
+        predictors=REGRESSION_PREDICTORS[5],  # Model 6: kitchen_sink_all
+        target_column=target_column,
+        significance_level=0.1,
+        model_type="logistic",
+        is_binary=True,
+        verbose=True,
+    )
+
+    # Compare models with/without feature selection
+    compare_models_with_without_selection(
+        df=binary_df,
+        all_predictors=REGRESSION_PREDICTORS[5],
+        selected_predictors=selected_features,
+        target_column=target_column,
+        model_type="logistic",
+        is_binary=True,
+    )
+
+    # Add selected features as Model 7 for all model types
+    REGRESSION_PREDICTORS.append(selected_features)
+    model_names.append("backward_selected")
+    log_model_names.append("backward_selected_log")
+    logistic_model_names.append("backward_selected_binary")
+
+    print(f"\n✅ Model 7 created with {len(selected_features)} selected features")
+    print(
+        f"   Will be tested across all three model types (Poisson, Logistic, Linear)\n"
+    )
 
     # POISSON MODELS on original counts
     print("\n" + "=" * 70)

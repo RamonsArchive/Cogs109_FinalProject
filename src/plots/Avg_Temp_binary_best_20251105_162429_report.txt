@@ -1,0 +1,41 @@
+
+======================================================================
+⭐ BEST MODEL ⭐
+MODEL REPORT: Avg_Temp_binary (BEST MODEL)
+MODEL TYPE: LOGISTIC
+======================================================================
+Timestamp: 2025-11-05 16:24:30
+
+PREDICTORS (8):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Accuracy:         0.5486
+  • Precision:        0.2425
+  • Recall:           0.4931
+  • F1 Score:         0.3208
+  • ROC-AUC:          0.5498
+  • Log Loss:         0.6904
+
+TEST SET RESULTS:
+  • Accuracy:         0.4027
+  • Precision:        0.2065
+  • Recall:           0.7805
+  • F1 Score:         0.3265
+  • ROC-AUC:          0.5833
+  • Log Loss:         0.6879
+
+GENERALIZATION (Test/CV ratio):
+  • Accuracy:         0.7341
+  • ROC-AUC:          1.0609
+  • F1 Score:         1.0180
+  
+  Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
+
+======================================================================
+🎯 This is the BEST model based on 10-fold CV ROC-AUC
+   - Retrained on full 80/20 train/test split
+   - Use this model for final predictions
+======================================================================
+
+======================================================================

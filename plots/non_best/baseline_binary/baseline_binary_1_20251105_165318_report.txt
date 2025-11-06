@@ -1,0 +1,35 @@
+
+======================================================================
+
+MODEL REPORT: baseline_binary (Model 1)
+MODEL TYPE: LOGISTIC
+======================================================================
+Timestamp: 2025-11-05 16:53:18
+
+PREDICTORS (7):
+surface_type, day, week, season, stadium, surface, dome
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Accuracy:         0.5475
+  • Precision:        0.2375
+  • Recall:           0.4758
+  • F1 Score:         0.3125
+  • ROC-AUC:          0.5442
+  • Log Loss:         0.6922
+
+TEST SET RESULTS:
+  • Accuracy:         0.4027
+  • Precision:        0.2102
+  • Recall:           0.8049
+  • F1 Score:         0.3333
+  • ROC-AUC:          0.5757
+  • Log Loss:         0.6942
+
+GENERALIZATION (Test/CV ratio):
+  • Accuracy:         0.7356
+  • ROC-AUC:          1.0579
+  • F1 Score:         1.0667
+  
+  Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
+
+======================================================================

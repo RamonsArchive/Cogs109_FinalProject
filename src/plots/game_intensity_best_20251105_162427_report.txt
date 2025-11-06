@@ -1,0 +1,50 @@
+
+======================================================================
+⭐ BEST MODEL ⭐
+MODEL REPORT: game_intensity (BEST MODEL)
+MODEL TYPE: POISSON
+======================================================================
+Timestamp: 2025-11-05 16:24:29
+
+PREDICTORS (13):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              3.9889
+  • RMSE:             1.9972
+  • MAE:              1.5841
+
+TEST SET RESULTS:
+  • MSE:              4.0996
+  • RMSE:             2.0248
+  • MAE:              1.5795
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              1.0278
+  • MAE:              0.9972
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.0835
+  • Mean Actual:      2.90
+  • Mean Predicted:   2.99
+  • Actual Range:     10.00
+  • Predicted Range:  1.31
+
+MODEL INTERPRETATION:
+  • R² = 8.4% means the model explains 8.4% of variance
+  • Predictions range from 2.37 to 3.68
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Very low R² (0.0835)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+======================================================================
+🎯 This is the BEST model based on 10-fold CV Poisson Deviance
+   - Retrained on full 80/20 train/test split
+   - Use this model for final predictions
+======================================================================
+
+======================================================================

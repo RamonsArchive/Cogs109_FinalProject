@@ -23,9 +23,52 @@ from sklearn.metrics import (
     roc_auc_score,
     log_loss,
 )
+from sklearn.base import BaseEstimator, RegressorMixin
+import statsmodels.api as sm
 
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
+
+
+class NegativeBinomialRegressor(BaseEstimator, RegressorMixin):
+    """
+    Sklearn-compatible wrapper for statsmodels Negative Binomial regression.
+
+    Negative Binomial handles overdispersion in count data where Var(Y) > E(Y).
+    """
+
+    def __init__(self, max_iter=1000):
+        self.max_iter = max_iter
+        self.model_ = None
+        self.alpha_ = None  # Dispersion parameter
+
+    def fit(self, X, y):
+        """Fit Negative Binomial regression"""
+        # Add constant for intercept
+        X_with_const = sm.add_constant(X)
+
+        # Fit Negative Binomial model
+        self.model_ = sm.GLM(
+            y, X_with_const, family=sm.families.NegativeBinomial()
+        ).fit(maxiter=self.max_iter, disp=0)
+
+        # Store dispersion parameter
+        self.alpha_ = self.model_.scale
+
+        return self
+
+    def predict(self, X):
+        """Predict using fitted Negative Binomial model"""
+        # Add constant for intercept
+        X_with_const = sm.add_constant(X)
+        return self.model_.predict(X_with_const)
+
+    def score(self, X, y):
+        """Return R² score (for sklearn compatibility)"""
+        y_pred = self.predict(X)
+        ss_res = np.sum((y - y_pred) ** 2)
+        ss_tot = np.sum((y - np.mean(y)) ** 2)
+        return 1 - (ss_res / ss_tot)
 
 
 def make_pipeline(num_cols, cat_cols, model_type="poisson"):
@@ -39,6 +82,8 @@ def make_pipeline(num_cols, cat_cols, model_type="poisson"):
 
     if model_type == "poisson":
         clf = PoissonRegressor(max_iter=5000)
+    elif model_type == "negbin":
+        clf = NegativeBinomialRegressor(max_iter=5000)  # Handles overdispersion
     elif model_type == "linear":
         clf = LinearRegression()  # OLS
     elif model_type == "ridge":
@@ -110,7 +155,7 @@ def train_model(
     pipeline = make_pipeline(num_cols_all, cat_cols_all, model_type=model_type)
     cv = KFold(n_splits=10, shuffle=True, random_state=RANDOM_STATE)
 
-    if model_type == "poisson":
+    if model_type == "poisson" or model_type == "negbin":
         scoring = {
             "neg_poisson_dev": "neg_mean_poisson_deviance",
             "neg_mse": "neg_mean_squared_error",
@@ -154,9 +199,14 @@ def train_model(
         mean_mse = -np.mean(cv_out["test_neg_mse"])
         mean_mae = -np.mean(cv_out["test_neg_mae"])
 
-        if model_type == "poisson":
+        if model_type == "poisson" or model_type == "negbin":
             mean_poisson_dev = -np.mean(cv_out["test_neg_poisson_dev"])
-            print(f"[CV] Mean Poisson deviance: {mean_poisson_dev:.4f}")
+            model_label = (
+                "Negative Binomial deviance"
+                if model_type == "negbin"
+                else "Poisson deviance"
+            )
+            print(f"[CV] Mean {model_label}: {mean_poisson_dev:.4f}")
             primary_metric = mean_poisson_dev
         else:
             mean_r2 = np.mean(cv_out["test_r2"])
@@ -199,11 +249,16 @@ def train_model(
         test_mse = mean_squared_error(y_test, y_pred)
         test_mae = mean_absolute_error(y_test, y_pred)
 
-        if model_type == "poisson":
+        if model_type == "poisson" or model_type == "negbin":
             test_poisson_dev = mean_poisson_deviance(
                 y_test, np.clip(y_pred, 1e-9, None)
             )
-            print(f"[Test] Poisson deviance: {test_poisson_dev:.4f}")
+            model_label = (
+                "Negative Binomial deviance"
+                if model_type == "negbin"
+                else "Poisson deviance"
+            )
+            print(f"[Test] {model_label}: {test_poisson_dev:.4f}")
         else:
             from sklearn.metrics import r2_score
 
