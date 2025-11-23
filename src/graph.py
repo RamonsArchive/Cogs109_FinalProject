@@ -256,10 +256,9 @@ def graph_model(
     fig1, axes = plt.subplots(1, 3, figsize=(15, 4))
 
     # ✅ Adjust metrics based on model type
-    if model_type == "poisson" or model_type == "negbin":
+    if model_type == "poisson":
         metrics = ["poisson_dev", "mse", "mae"]
-        model_label = "Negative Binomial" if model_type == "negbin" else "Poisson"
-        titles = [f"{model_label} Deviance", "MSE", "MAE"]
+        titles = ["Poisson Deviance", "MSE", "MAE"]
     elif model_type == "logistic":
         metrics = ["roc_auc", "accuracy", "f1"]
         titles = ["ROC-AUC", "Accuracy", "F1 Score"]
@@ -269,7 +268,7 @@ def graph_model(
 
     for ax, metric, title in zip(axes, metrics, titles):
         # ✅ Handle missing Poisson deviance for linear models
-        if metric == "poisson_dev" and model_type not in ["poisson", "negbin"]:
+        if metric == "poisson_dev" and model_type != "poisson":
             ax.text(
                 0.5,
                 0.5,
@@ -1068,12 +1067,8 @@ GENERALIZATION (Test/CV ratio):
 """
     else:
         # Add deviance for Poisson/Negative Binomial models
-        if model_type in ["poisson", "negbin"] and "val_poisson_dev" in results:
-            dev_label = (
-                "Negative Binomial Deviance"
-                if model_type == "negbin"
-                else "Poisson Deviance"
-            )
+        if model_type == "poisson" and "val_poisson_dev" in results:
+            dev_label = "Poisson Deviance"
             report += f"  • {dev_label}: {results['val_poisson_dev']:.4f}\n"
 
         report += f"""  • MSE:              {results['val_mse']:.4f}
@@ -1084,12 +1079,8 @@ TEST SET RESULTS:
 """
 
         # Add deviance for Poisson/Negative Binomial models
-        if model_type in ["poisson", "negbin"] and "test_poisson_dev" in results:
-            dev_label = (
-                "Negative Binomial Deviance"
-                if model_type == "negbin"
-                else "Poisson Deviance"
-            )
+        if model_type == "poisson" and "test_poisson_dev" in results:
+            dev_label = "Poisson Deviance"
             report += f"  • {dev_label}: {results['test_poisson_dev']:.4f}\n"
 
         report += f"""  • MSE:              {results['test_mse']:.4f}
@@ -1101,12 +1092,12 @@ GENERALIZATION (Test/CV ratio):
 
         # Add deviance ratio for Poisson/Negative Binomial models
         if (
-            model_type in ["poisson", "negbin"]
+            model_type == "poisson"
             and "val_poisson_dev" in results
             and "test_poisson_dev" in results
         ):
             dev_ratio = results["test_poisson_dev"] / results["val_poisson_dev"]
-            dev_label = "NegBin Dev" if model_type == "negbin" else "Poisson Dev"
+            dev_label = "Poisson Dev"
             report += f"  • {dev_label}:      {dev_ratio:.4f}\n"
 
         mse_ratio = results["test_mse"] / results["val_mse"]
@@ -1188,8 +1179,6 @@ MODEL INTERPRETATION:
             primary_metric = "ROC-AUC"
         elif model_type == "poisson":
             primary_metric = "Poisson Deviance"
-        elif model_type == "negbin":
-            primary_metric = "Negative Binomial Deviance"
         else:
             primary_metric = "MSE"
         report += f"""

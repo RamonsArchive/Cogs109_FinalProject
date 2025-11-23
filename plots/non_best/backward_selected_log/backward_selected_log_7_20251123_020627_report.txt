@@ -1,0 +1,48 @@
+
+======================================================================
+
+MODEL REPORT: backward_selected_log (Model 7)
+MODEL TYPE: LINEAR (Log-Transformed Target)
+======================================================================
+Timestamp: 2025-11-23 02:06:27
+
+PREDICTORS (2):
+week, yds_l
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              0.2711
+  • RMSE:             0.5207
+  • MAE:              0.4001
+
+TEST SET RESULTS:
+  • MSE:              0.2655
+  • RMSE:             0.5153
+  • MAE:              0.3876
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              0.9794
+  • MAE:              0.9687
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+        ORIGINAL SCALE METRICS:
+        Mean: 2.52 injuries
+        MSE: 3.9255 injuries
+        RMSE: 1.9813 injuries
+        MAE: 1.4338 injuries
+        R²: 0.1225
+        Pred Range: [0.00, 3.88]
+        
+ADDITIONAL METRICS:
+  • R² Score:         0.2720
+  • Mean Actual:      1.20
+  • Mean Predicted:   1.22
+  • Actual Range:     2.40
+  • Predicted Range:  1.69
+
+MODEL INTERPRETATION:
+  • R² = 27.2% means the model explains 27.2% of variance
+  • Predictions range from -0.11 to 1.58
+  • Actual values range from 0.00 to 2.40
+
+======================================================================

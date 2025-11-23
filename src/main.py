@@ -149,7 +149,7 @@ def main():
     print(f"   Class distribution: {np.bincount(binary_df[target_column])}")
 
     # Perform exploratory data analysis
-    exploratory_data_analysis(df, log_df, target_column)
+    # exploratory_data_analysis(df, log_df, target_column)
 
     # Perform correlation analysis
     corr_original, corr_log = correlation_analysis(df, log_df, target_column)
@@ -197,6 +197,21 @@ def main():
     print(
         f"   Will be tested across all three model types (Poisson, Logistic, Linear)\n"
     )
+
+    # NEGATIVE BINOMIAL MODELS - REMOVED
+    #
+    # Reason: No robust sklearn-compatible Negative Binomial implementation exists.
+    # - statsmodels: Too numerically unstable for cross-validation
+    # - sklearn: No native support
+    # - Alternative packages: Not sklearn-compatible
+    #
+    # Alternative: Poisson regression works well for this data.
+    # While data shows overdispersion (Var/Mean = 1.39), Poisson still provides
+    # valid point predictions. The Linear (log) model with R²=27.2% is our best model.
+    #
+    # negbin_results = {}
+    # negbin_errors = []
+    # ... (negbin training code removed)
 
     # POISSON MODELS on original counts
     print("\n" + "=" * 70)
