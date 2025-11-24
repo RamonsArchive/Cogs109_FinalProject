@@ -171,7 +171,7 @@ def main():
         df=binary_df,
         predictors=REGRESSION_PREDICTORS[5],  # Model 6: kitchen_sink_all
         target_column=target_column,
-        significance_level=0.1,
+        significance_level=0.1, # Adjusted R² = 26.5% 
         model_type="logistic",
         is_binary=True,
         verbose=True,

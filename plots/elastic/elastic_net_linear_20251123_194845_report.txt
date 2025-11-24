@@ -1,0 +1,57 @@
+
+======================================================================
+
+MODEL REPORT: elastic_net_linear
+MODEL TYPE: LINEAR (Elastic Net - L1 + L2 Regularization) - Log-Transformed Target
+======================================================================
+Timestamp: 2025-11-23 19:48:45
+
+HYPERPARAMETERS:
+  • Alpha (regularization strength): 0.0010
+  • L1 Ratio: 0.8000
+
+PREDICTORS (19):
+surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • R²:                0.1602
+  • MSE:               0.2799
+  • RMSE:              0.5290
+  • MAE:               0.4090
+
+TEST SET RESULTS:
+  • R²:                0.2848
+  • MSE:               0.2609
+  • RMSE:              0.5107
+  • MAE:               0.3891
+  • R²:                0.2848
+  • Adjusted R²:       0.2172
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:               0.9321
+  • MAE:               0.9513
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ORIGINAL SCALE METRICS:
+  • Mean:              2.53 injuries
+  • MSE:               3.7969 injuries
+  • RMSE:              1.9486 injuries
+  • MAE:               1.4324 injuries
+  • R²:                0.1512
+  • Adjusted R²:       0.0710
+  • Pred Range:        [0.00, 4.28]
+
+ADDITIONAL METRICS:
+  • Mean Actual:       1.20
+  • Mean Predicted:    1.22
+  • Actual Range:      2.40
+  • Predicted Range:   1.76
+
+MODEL INTERPRETATION:
+  • R² = 28.5% means the model explains 28.5% of variance
+  • Adjusted R² = 21.7% accounts for model complexity
+  • Predictions range from -0.10 to 1.66
+  • Actual values range from 0.00 to 2.40
+
+======================================================================

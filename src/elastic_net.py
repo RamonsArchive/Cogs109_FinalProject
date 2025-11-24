@@ -369,7 +369,7 @@ def main():
         model_type="poisson",
         is_log_target=False,
         alpha=0.01,  # Change this to use different alpha values
-        tune_hyperparameters=False,  # Set to False to use specified alpha/l1_ratio
+        tune_hyperparameters=True,  # Set to False to use specified alpha/l1_ratio
     )
     
     graph_elastic_net_model(poisson_model, "elastic_net_poisson", is_best=False)
@@ -382,6 +382,8 @@ def main():
     print("=" * 70)
     linear_results = {}
     
+
+    #  Adjusted R² = 21.7% l1_ratio = 0.8
     linear_model = train_elastic_net_model(
         df=log_df,
         predictors=PREDICTORS,
@@ -389,8 +391,8 @@ def main():
         model_name="elastic_net_linear",
         model_type="linear",
         is_log_target=True,
-        alpha=0.01,  # Change this to use different alpha values
-        l1_ratio=0.5,  # Change this to use different l1_ratio values (0=Ridge, 1=Lasso, 0.5=Elastic Net)
+        alpha=0.001,  # Change this to use different alpha values
+        l1_ratio=0.8,  # Change this to use different l1_ratio values (0=Ridge, 1=Lasso, 0.5=Elastic Net)
         tune_hyperparameters=False,  # Set to False to use specified alpha/l1_ratio
     )
     

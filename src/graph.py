@@ -1008,6 +1008,22 @@ def graph_model(
     print(f"{'='*70}\n")
 
 
+def calculate_adjusted_r2(r2: float, n: int, p: int) -> float:
+    """Calculate adjusted R²
+    
+    Args:
+        r2: R² score
+        n: Number of samples
+        p: Number of features (predictors)
+    
+    Returns:
+        Adjusted R² (or np.nan if n <= p + 1)
+    """
+    if n <= p + 1:
+        return np.nan  # Cannot calculate if n <= p + 1
+    return 1 - (1 - r2) * (n - 1) / (n - p - 1)
+
+
 def generate_text_report(
     display_name,
     results,
@@ -1086,7 +1102,19 @@ TEST SET RESULTS:
         report += f"""  • MSE:              {results['test_mse']:.4f}
   • RMSE:             {np.sqrt(results['test_mse']):.4f}
   • MAE:              {results['test_mae']:.4f}
-
+"""
+        
+        # Calculate and add R² and Adjusted R² for regression models (not logistic)
+        if model_type != "logistic":
+            r2 = r2_score(y_test, y_pred)
+            n = len(y_test)
+            p = len(predictors)
+            adj_r2 = calculate_adjusted_r2(r2, n, p)
+            report += f"  • R²:                {r2:.4f}\n"
+            if not np.isnan(adj_r2):
+                report += f"  • Adjusted R²:       {adj_r2:.4f}\n"
+        
+        report += f"""
 GENERALIZATION (Test/CV ratio):
 """
 
@@ -1121,6 +1149,11 @@ GENERALIZATION (Test/CV ratio):
         original_rmse = np.sqrt(mean_squared_error(y_test_original, y_pred_original))
         original_mae = mean_absolute_error(y_test_original, y_pred_original)
         original_r2 = r2_score(y_test_original, y_pred_original)
+        
+        # Calculate adjusted R² for original scale
+        n = len(y_test_original)
+        p = len(predictors)
+        original_adj_r2 = calculate_adjusted_r2(original_r2, n, p)
 
         print(f"\n[ORIGINAL SCALE METRICS]")
         print(f"Mean: {original_pred_mean:.2f} injuries")
@@ -1128,7 +1161,10 @@ GENERALIZATION (Test/CV ratio):
         print(f"RMSE: {original_rmse:.4f} injuries")
         print(f"MAE: {original_mae:.4f} injuries")
         print(f"R²: {original_r2:.4f}")
+        if not np.isnan(original_adj_r2):
+            print(f"Adjusted R²: {original_adj_r2:.4f}")
         print(f"Pred Range: [{y_pred_original.min():.2f}, {y_pred_original.max():.2f}]")
+        
         report += f"""
         ORIGINAL SCALE METRICS:
         Mean: {original_pred_mean:.2f} injuries
@@ -1136,25 +1172,39 @@ GENERALIZATION (Test/CV ratio):
         RMSE: {original_rmse:.4f} injuries
         MAE: {original_mae:.4f} injuries
         R²: {original_r2:.4f}
-        Pred Range: [{y_pred_original.min():.2f}, {y_pred_original.max():.2f}]
-        """
+"""
+        if not np.isnan(original_adj_r2):
+            report += f"        Adjusted R²: {original_adj_r2:.4f}\n"
+        
+        report += f"        Pred Range: [{y_pred_original.min():.2f}, {y_pred_original.max():.2f}]\n        "
 
     if model_type != "logistic":
         r2 = r2_score(y_test, y_pred)
+        n = len(y_test)
+        p = len(predictors)
+        adj_r2 = calculate_adjusted_r2(r2, n, p)
         pred_range = y_pred.max() - y_pred.min()
         actual_range = y_test.max() - y_test.min()
 
         report += f"""
 ADDITIONAL METRICS:
   • R² Score:         {r2:.4f}
-  • Mean Actual:      {actual_mean:.2f}
+"""
+        if not np.isnan(adj_r2):
+            report += f"  • Adjusted R²:       {adj_r2:.4f}\n"
+        
+        report += f"""  • Mean Actual:      {actual_mean:.2f}
   • Mean Predicted:   {pred_mean:.2f}
   • Actual Range:     {actual_range:.2f}
   • Predicted Range:  {pred_range:.2f}
 
 MODEL INTERPRETATION:
   • R² = {r2:.1%} means the model explains {r2:.1%} of variance
-  • Predictions range from {y_pred.min():.2f} to {y_pred.max():.2f}
+"""
+        if not np.isnan(adj_r2):
+            report += f"  • Adjusted R² = {adj_r2:.1%} accounts for model complexity\n"
+        
+        report += f"""  • Predictions range from {y_pred.min():.2f} to {y_pred.max():.2f}
   • Actual values range from {y_test.min():.2f} to {y_test.max():.2f}
 """
 
