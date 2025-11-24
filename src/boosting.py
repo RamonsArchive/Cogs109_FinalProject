@@ -12,7 +12,7 @@ from clean import clean_data, log_transform_data
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split, KFold, cross_validate
+from sklearn.model_selection import train_test_split, KFold, cross_validate, cross_val_predict
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import (
     mean_squared_error,
@@ -102,15 +102,17 @@ def train_boosting_model(
     X_test = test_df[predictors]
     y_test = test_df[target_column]
 
+    # Store original scale targets before any transformation
+    y_train_original = y_train.copy()
+    y_test_original = y_test.copy()
+    
     # Log-transform target if requested
     if is_log_target:
         y_train = np.log1p(y_train)
-        y_test_original = y_test.copy()
         y_test = np.log1p(y_test)
     else:
         y_train = y_train.astype(int)
         y_test = y_test.astype(int)
-        y_test_original = y_test.copy()
 
     print(f"Train size: {train_df.shape[0]} | Test size: {test_df.shape[0]}")
 
@@ -126,6 +128,22 @@ def train_boosting_model(
     }
 
     cv_out = cross_validate(pipeline, X_train, y_train, cv=cv, scoring=scoring)
+    
+    # For log-transformed models, also calculate CV metrics on original scale
+    cv_mse_original = None
+    cv_mae_original = None
+    cv_rmse_original = None
+    if is_log_target:
+        # Get CV predictions on log scale
+        y_cv_pred_log = cross_val_predict(pipeline, X_train, y_train, cv=cv)
+        # Transform predictions back to original scale
+        y_cv_pred_original = np.maximum(np.expm1(y_cv_pred_log), 0)
+        # Calculate metrics on original scale (using original targets)
+        cv_mse_original = mean_squared_error(y_train_original, y_cv_pred_original)
+        cv_mae_original = mean_absolute_error(y_train_original, y_cv_pred_original)
+        cv_rmse_original = np.sqrt(cv_mse_original)
+        print(f"[CV - Original Scale] RMSE: {cv_rmse_original:.4f}   (MSE: {cv_mse_original:.4f})")
+        print(f"[CV - Original Scale] MAE : {cv_mae_original:.4f}")
 
     # Extract CV metrics
     mean_mse = -np.mean(cv_out["test_neg_mse"])
@@ -183,16 +201,23 @@ def train_boosting_model(
             feature_names.extend([f"{col}_{cat}" for cat in categories])
 
     # Store results
+    cv_dict = {
+        "val_primary_metric": primary_metric,
+        "val_mse": mean_mse,
+        "val_mae": mean_mae,
+        "val_r2": mean_r2,
+        "test_mse": test_mse,
+        "test_mae": test_mae,
+        "test_r2": test_r2,
+    }
+    # Add original scale CV metrics for log-transformed models
+    if is_log_target and cv_mse_original is not None:
+        cv_dict["val_mse_original"] = cv_mse_original
+        cv_dict["val_mae_original"] = cv_mae_original
+        cv_dict["val_rmse_original"] = cv_rmse_original
+    
     results[model_name] = {
-        "10foldCV": {
-            "val_primary_metric": primary_metric,
-            "val_mse": mean_mse,
-            "val_mae": mean_mae,
-            "val_r2": mean_r2,
-            "test_mse": test_mse,
-            "test_mae": test_mae,
-            "test_r2": test_r2,
-        },
+        "10foldCV": cv_dict,
         "y_test": y_test_for_metrics,
         "y_pred": y_pred_for_metrics,
         "y_test_original": y_test_original if is_log_target else y_test,

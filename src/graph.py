@@ -1090,7 +1090,18 @@ GENERALIZATION (Test/CV ratio):
         report += f"""  • MSE:              {results['val_mse']:.4f}
   • RMSE:             {np.sqrt(results['val_mse']):.4f}
   • MAE:              {results['val_mae']:.4f}
-
+"""
+        
+        # Add original scale CV metrics for log-transformed models
+        if is_log_target and "val_mse_original" in results:
+            report += f"""
+CROSS-VALIDATION RESULTS (10-fold) - ORIGINAL SCALE:
+  • MSE:              {results['val_mse_original']:.4f}
+  • RMSE:             {results['val_rmse_original']:.4f}
+  • MAE:              {results['val_mae_original']:.4f}
+"""
+        
+        report += f"""
 TEST SET RESULTS:
 """
 

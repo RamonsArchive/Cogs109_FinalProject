@@ -1,0 +1,53 @@
+
+======================================================================
+
+MODEL REPORT: poly_deg_4 (Model 4)
+MODEL TYPE: LINEAR
+======================================================================
+Timestamp: 2025-11-23 22:39:39
+
+PREDICTORS (13):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              12.4256
+  • RMSE:             3.5250
+  • MAE:              2.4551
+
+TEST SET RESULTS:
+  • MSE:              29.1084
+  • RMSE:             5.3952
+  • MAE:              2.7078
+  • R²:                -5.5071
+  • Adjusted R²:       -5.9158
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              2.3426
+  • MAE:              1.1030
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         -5.5071
+  • Adjusted R²:       -5.9158
+  • Mean Actual:      2.90
+  • Mean Predicted:   2.85
+  • Actual Range:     10.00
+  • Predicted Range:  68.78
+
+MODEL INTERPRETATION:
+  • R² = -550.7% means the model explains -550.7% of variance
+  • Adjusted R² = -591.6% accounts for model complexity
+  • Predictions range from -44.42 to 24.36
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Very low R² (-5.5071)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+⚠️  WARNING: Potential overfitting detected
+   - Test error is significantly higher than CV error
+   - MSE ratio: 2.34, MAE ratio: 1.10
+   - Consider: more regularization, simpler model, or more training data
+
+======================================================================

@@ -1,0 +1,44 @@
+
+======================================================================
+
+MODEL REPORT: poly_deg_4 (Model 4)
+MODEL TYPE: LINEAR
+======================================================================
+Timestamp: 2025-11-23 22:10:21
+
+PREDICTORS (13):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              2.8098
+  • RMSE:             1.6763
+  • MAE:              1.3108
+
+TEST SET RESULTS:
+  • MSE:              2.8098
+  • RMSE:             1.6763
+  • MAE:              1.3108
+  • R²:                0.3234
+  • Adjusted R²:       0.3153
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              1.0000
+  • MAE:              1.0000
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.3234
+  • Adjusted R²:       0.3153
+  • Mean Actual:      2.99
+  • Mean Predicted:   2.99
+  • Actual Range:     10.00
+  • Predicted Range:  9.86
+
+MODEL INTERPRETATION:
+  • R² = 32.3% means the model explains 32.3% of variance
+  • Adjusted R² = 31.5% accounts for model complexity
+  • Predictions range from -1.17 to 8.69
+  • Actual values range from 0.00 to 10.00
+
+======================================================================

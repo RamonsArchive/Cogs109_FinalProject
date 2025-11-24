@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split, KFold, cross_validate
+from sklearn.model_selection import train_test_split, KFold, cross_validate, cross_val_predict
 from sklearn.metrics import (
     mean_squared_error,
     mean_absolute_error,
@@ -156,6 +156,23 @@ def train_model(
         }
 
     cv_out = cross_validate(pipeline, X_train, y_train, cv=cv, scoring=scoring)
+    
+    # For log-transformed models, also calculate CV metrics on original scale
+    cv_mse_original = None
+    cv_mae_original = None
+    cv_rmse_original = None
+    if is_log_target and model_type != "logistic":
+        # Get CV predictions on log scale
+        y_train_original = np.expm1(y_train)  # Original scale targets
+        y_cv_pred_log = cross_val_predict(pipeline, X_train, y_train, cv=cv)
+        # Transform predictions back to original scale
+        y_cv_pred_original = np.maximum(np.expm1(y_cv_pred_log), 0)
+        # Calculate metrics on original scale
+        cv_mse_original = mean_squared_error(y_train_original, y_cv_pred_original)
+        cv_mae_original = mean_absolute_error(y_train_original, y_cv_pred_original)
+        cv_rmse_original = np.sqrt(cv_mse_original)
+        print(f"[CV - Original Scale] RMSE: {cv_rmse_original:.4f}   (MSE: {cv_mse_original:.4f})")
+        print(f"[CV - Original Scale] MAE : {cv_mae_original:.4f}")
 
     if model_type == "logistic":
         # Classification metrics
@@ -279,14 +296,21 @@ def train_model(
             "is_binary": is_binary,
         }
     else:
+        cv_dict = {
+            "val_primary_metric": primary_metric,  # MSE for linear, Poisson dev for Poisson
+            "val_mse": mean_mse,
+            "val_mae": mean_mae,
+            "test_mse": test_mse,
+            "test_mae": test_mae,
+        }
+        # Add original scale CV metrics for log-transformed models
+        if is_log_target and cv_mse_original is not None:
+            cv_dict["val_mse_original"] = cv_mse_original
+            cv_dict["val_mae_original"] = cv_mae_original
+            cv_dict["val_rmse_original"] = cv_rmse_original
+        
         results[model_name] = {
-            "10foldCV": {
-                "val_primary_metric": primary_metric,  # MSE for linear, Poisson dev for Poisson
-                "val_mse": mean_mse,
-                "val_mae": mean_mae,
-                "test_mse": test_mse,
-                "test_mae": test_mae,
-            },
+            "10foldCV": cv_dict,
             "y_test": y_test,
             "y_pred": y_pred,
             "df": df,

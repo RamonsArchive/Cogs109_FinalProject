@@ -1,0 +1,76 @@
+
+======================================================================
+
+MODEL REPORT: boosting_log
+MODEL TYPE: Gradient Boosting (Log-Transformed Target)
+======================================================================
+Timestamp: 2025-11-23 22:00:46
+
+HYPERPARAMETERS:
+  • n_estimators (B trees):     300
+  • learning_rate (shrinkage):  0.001
+  • max_depth (splits):         1
+
+PREDICTORS (19):
+surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • R²:                -0.0049
+  • MSE:               0.3341
+  • RMSE:              0.5780
+  • MAE:               0.4645
+
+CROSS-VALIDATION RESULTS (10-fold) - ORIGINAL SCALE:
+  • MSE:               4.3497
+  • RMSE:              2.0856
+  • MAE:               1.6464
+
+TEST SET RESULTS:
+  • R²:                -0.0304
+  • Adjusted R²:       -0.1279
+  • MSE:               4.6095
+  • RMSE:              2.1470
+  • MAE:               1.6431
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:               13.7977
+  • MAE:               3.5375
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+LOG-SCALE METRICS (before expm1 transformation):
+  • R²:                0.0103
+  • RMSE:              0.6008
+  • MSE:               0.3609
+
+ORIGINAL SCALE METRICS (after expm1 transformation):
+  • Mean:              2.46 injuries
+  • MSE:               4.6095 injuries
+  • RMSE:              2.1470 injuries
+  • MAE:               1.6431 injuries
+  • R²:                -0.0304
+  • Adjusted R²:       -0.1279
+  • Pred Range:        [2.30, 2.50]
+
+ADDITIONAL METRICS:
+  • Mean Actual:       2.90
+  • Mean Predicted:    2.46
+  • Actual Range:      10.00
+  • Predicted Range:   0.20
+
+MODEL INTERPRETATION:
+  • R² = -3.0% means the model explains -3.0% of variance
+  • Adjusted R² = -12.8% accounts for model complexity
+  • Predictions range from 2.30 to 2.50
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Very low R² (-0.0304)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+⚠️  WARNING: Potential overfitting detected
+   - Test error is significantly higher than CV error
+   - MSE ratio: 13.80, MAE ratio: 3.54
+   - Consider: more regularization, simpler model, or more training data
+
+======================================================================
