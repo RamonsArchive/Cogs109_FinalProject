@@ -1,6 +1,6 @@
 """
-Gradient Boosting Models for NFL Injury Prediction
-Uses GradientBoostingRegressor on count data
+Random Forest Models for NFL Injury Prediction
+Uses RandomForestRegressor on count data
 StandardScaler and OneHotEncoder handle data standardization automatically
 """
 
@@ -8,35 +8,37 @@ import os
 import numpy as np
 import pandas as pd
 from load import load_data
-from clean import clean_data, log_transform_data
+from clean import clean_data
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, KFold, cross_validate, cross_val_predict, GridSearchCV
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import (
     mean_squared_error,
     mean_absolute_error,
     r2_score,
 )
-from graph_boosting import graph_boosting_model
+from graph_random_forest import graph_random_forest_model
 
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
 
-def make_boosting_pipeline(num_cols, cat_cols, n_estimators=200, learning_rate=0.1, max_depth=3):
-    """Create pipeline with Gradient Boosting Regressor
+def make_random_forest_pipeline(num_cols, cat_cols, n_estimators=100, max_depth=None, min_samples_split=2, min_samples_leaf=1, max_features='sqrt'):
+    """Create pipeline with Random Forest Regressor
     
     Args:
         num_cols: List of numeric column names
         cat_cols: List of categorical column names
-        n_estimators: Number of boosting stages
-        learning_rate: Learning rate (shrinkage)
-        max_depth: Maximum depth of trees
+        n_estimators: Number of trees in the forest
+        max_depth: Maximum depth of trees (None = unlimited)
+        min_samples_split: Minimum samples required to split a node
+        min_samples_leaf: Minimum samples required at leaf node
+        max_features: Number of features to consider for best split
     
     Returns:
-        Pipeline with preprocessing and GradientBoostingRegressor
+        Pipeline with preprocessing and RandomForestRegressor
     """
     preprocessor = ColumnTransformer(
         transformers=[
@@ -45,13 +47,15 @@ def make_boosting_pipeline(num_cols, cat_cols, n_estimators=200, learning_rate=0
         ]
     )
     
-    model = GradientBoostingRegressor(
+    model = RandomForestRegressor(
         n_estimators=n_estimators,
-        learning_rate=learning_rate,
         max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf,
+        max_features=max_features,
         random_state=RANDOM_STATE,
-        subsample=0.8,  # Use 80% of samples for each tree (helps prevent overfitting)
-        max_features='sqrt',  # Use sqrt(n_features) for each tree
+        n_jobs=-1,  # Use all CPU cores for parallel training
+        bootstrap=True,  # Use bootstrap samples (standard for RF)
     )
     
     return Pipeline([("preprocessor", preprocessor), ("model", model)])
@@ -64,12 +68,14 @@ def train_final_model(
     results: dict,
     model_name: str,
     is_log_target=False,
-    n_estimators=200,
-    learning_rate=0.1,
-    max_depth=3,
+    n_estimators=100,
+    max_depth=None,
+    min_samples_split=2,
+    min_samples_leaf=1,
+    max_features='sqrt',
 ):
     """
-    Train final Gradient Boosting model on full training set and evaluate on held-out test set.
+    Train final Random Forest model on full training set and evaluate on held-out test set.
     
     IMPORTANT: This function receives pre-split train_df and test_df.
     - Trains on FULL train_df (80% of data)
@@ -82,10 +88,12 @@ def train_final_model(
         predictors: List of predictor column names
         results: Dictionary to store results
         model_name: Name for this model
-        is_log_target: If True, use log1p transformation on target (better for counts)
-        n_estimators: Number of boosting stages (B trees)
-        learning_rate: Shrinkage parameter (learning rate)
-        max_depth: Maximum depth of trees (number of splits)
+        is_log_target: If True, use log1p transformation on target
+        n_estimators: Number of trees in the forest
+        max_depth: Maximum depth of trees (None = unlimited)
+        min_samples_split: Minimum samples required to split a node
+        min_samples_leaf: Minimum samples required at leaf node
+        max_features: Number of features to consider for best split
     """
     target_column = "num_injuries"
     
@@ -94,13 +102,15 @@ def train_final_model(
 
     print(f"\n{'='*70}")
     data_type = "Log-Transformed" if is_log_target else "Count"
-    print(f"Training {model_name} (Gradient Boosting on {data_type} Data)")
+    print(f"Training {model_name} (Random Forest on {data_type} Data)")
     print(f"{'='*70}")
     print(f"Predictors: {len(predictors)} ({len(num_cols)} numeric, {len(cat_cols)} categorical)")
     print(f"Hyperparameters:")
-    print(f"  • n_estimators (B trees): {n_estimators}")
-    print(f"  • learning_rate (shrinkage): {learning_rate}")
-    print(f"  • max_depth (splits): {max_depth}")
+    print(f"  • n_estimators (trees): {n_estimators}")
+    print(f"  • max_depth: {max_depth if max_depth is not None else 'None (unlimited)'}")
+    print(f"  • min_samples_split: {min_samples_split}")
+    print(f"  • min_samples_leaf: {min_samples_leaf}")
+    print(f"  • max_features: {max_features}")
     print(f"\n📊 Data Split:")
     print(f"  • Training set: {len(train_df)} samples (80%)")
     print(f"  • Test set: {len(test_df)} samples (20%) - UNBIASED evaluation")
@@ -126,7 +136,8 @@ def train_final_model(
         y_test = y_test.astype(int)
 
     # Create pipeline
-    pipeline = make_boosting_pipeline(num_cols, cat_cols, n_estimators, learning_rate, max_depth)
+    pipeline = make_random_forest_pipeline(num_cols, cat_cols, n_estimators, max_depth, 
+                                          min_samples_split, min_samples_leaf, max_features)
 
     # 10-fold cross-validation on training set (for model assessment)
     print(f"\n📈 Performing 10-fold CV on training set...")
@@ -239,25 +250,29 @@ def train_final_model(
         "is_log_target": is_log_target,
         "df": full_df,  # Full dataset for plotting
         "predictors": predictors,
-        "model_type": "boosting",
+        "model_type": "random_forest",
         "pipeline": pipeline,
         "feature_importances": feature_importances,
         "feature_names": feature_names,
         "n_estimators": n_estimators,
-        "learning_rate": learning_rate,
         "max_depth": max_depth,
+        "min_samples_split": min_samples_split,
+        "min_samples_leaf": min_samples_leaf,
+        "max_features": max_features,
     }
 
     return results[model_name]
 
 
-def tune_boosting_hyperparameters(
+def tune_random_forest_hyperparameters(
     train_df: pd.DataFrame,
     predictors: list,
     is_log_target=False,
-    n_estimators_grid=[300, 500, 800, 1200],
-    learning_rate_grid=[0.01, 0.03, 0.05, 0.1],
-    max_depth_grid=[1, 2, 3, 4],
+    n_estimators_grid=[100, 200, 300, 500],
+    max_depth_grid=[10, 20, 30, None],
+    min_samples_split_grid=[2, 5, 10],
+    min_samples_leaf_grid=[1, 2, 4],
+    max_features_grid=['sqrt', 'log2', 0.5],
 ):
     """
     Tune hyperparameters using GridSearchCV on training data only.
@@ -271,8 +286,10 @@ def tune_boosting_hyperparameters(
         predictors: List of predictor column names
         is_log_target: If True, use log1p transformation on target
         n_estimators_grid: List of n_estimators values to try
-        learning_rate_grid: List of learning_rate values to try
-        max_depth_grid: List of max_depth values to try
+        max_depth_grid: List of max_depth values to try (None = unlimited)
+        min_samples_split_grid: List of min_samples_split values to try
+        min_samples_leaf_grid: List of min_samples_leaf values to try
+        max_features_grid: List of max_features values to try
     
     Returns:
         Dictionary with best hyperparameters and grid search results
@@ -287,7 +304,10 @@ def tune_boosting_hyperparameters(
     print(f"🔍 GRID SEARCH: Tuning hyperparameters for {data_type} model")
     print(f"{'='*70}")
     print(f"Training data size: {len(train_df)} (80% of full dataset)")
-    print(f"Grid size: {len(n_estimators_grid)} × {len(learning_rate_grid)} × {len(max_depth_grid)} = {len(n_estimators_grid) * len(learning_rate_grid) * len(max_depth_grid)} combinations")
+    total_combinations = (len(n_estimators_grid) * len(max_depth_grid) * 
+                         len(min_samples_split_grid) * len(min_samples_leaf_grid) * 
+                         len(max_features_grid))
+    print(f"Grid size: {len(n_estimators_grid)} × {len(max_depth_grid)} × {len(min_samples_split_grid)} × {len(min_samples_leaf_grid)} × {len(max_features_grid)} = {total_combinations} combinations")
     print(f"Using 10-fold CV for each combination (on training data only)")
     print(f"⚠️  Test set (20%) is NOT used for hyperparameter tuning!")
     
@@ -312,21 +332,23 @@ def tune_boosting_hyperparameters(
     
     base_pipeline = Pipeline([
         ("preprocessor", preprocessor),
-        ("model", GradientBoostingRegressor(
+        ("model", RandomForestRegressor(
             random_state=RANDOM_STATE,
-            subsample=0.8,
-            max_features='sqrt',
+            n_jobs=-1,
+            bootstrap=True,
         ))
     ])
     
     # Define parameter grid
     param_grid = {
         "model__n_estimators": n_estimators_grid,
-        "model__learning_rate": learning_rate_grid,
         "model__max_depth": max_depth_grid,
+        "model__min_samples_split": min_samples_split_grid,
+        "model__min_samples_leaf": min_samples_leaf_grid,
+        "model__max_features": max_features_grid,
     }
     
-    # Grid search with 10-fold CV (faster than 10-fold for grid search)
+    # Grid search with 10-fold CV (consistent with final evaluation)
     # Use negative MSE as scoring (lower is better, so we minimize)
     grid_search = GridSearchCV(
         base_pipeline,
@@ -350,15 +372,18 @@ def tune_boosting_hyperparameters(
     print(f"Best CV RMSE: {np.sqrt(best_score):.4f}")
     print(f"Best hyperparameters:")
     print(f"  • n_estimators: {best_params['model__n_estimators']}")
-    print(f"  • learning_rate: {best_params['model__learning_rate']}")
     print(f"  • max_depth: {best_params['model__max_depth']}")
+    print(f"  • min_samples_split: {best_params['model__min_samples_split']}")
+    print(f"  • min_samples_leaf: {best_params['model__min_samples_leaf']}")
+    print(f"  • max_features: {best_params['model__max_features']}")
     
     # Get top 5 combinations
     results_df = pd.DataFrame(grid_search.cv_results_)
     results_df['mean_test_rmse'] = np.sqrt(-results_df['mean_test_score'])
     top_5 = results_df.nsmallest(5, 'mean_test_rmse')[
-        ['param_model__n_estimators', 'param_model__learning_rate', 
-         'param_model__max_depth', 'mean_test_rmse', 'std_test_score']
+        ['param_model__n_estimators', 'param_model__max_depth', 
+         'param_model__min_samples_split', 'param_model__min_samples_leaf',
+         'param_model__max_features', 'mean_test_rmse', 'std_test_score']
     ]
     
     print(f"\n📊 Top 5 hyperparameter combinations:")
@@ -366,8 +391,10 @@ def tune_boosting_hyperparameters(
     
     return {
         "best_n_estimators": best_params['model__n_estimators'],
-        "best_learning_rate": best_params['model__learning_rate'],
         "best_max_depth": best_params['model__max_depth'],
+        "best_min_samples_split": best_params['model__min_samples_split'],
+        "best_min_samples_leaf": best_params['model__min_samples_leaf'],
+        "best_max_features": best_params['model__max_features'],
         "best_cv_mse": best_score,
         "best_cv_rmse": np.sqrt(best_score),
         "grid_search": grid_search,
@@ -377,10 +404,10 @@ def tune_boosting_hyperparameters(
 
 def main():
     """
-    Main function for Gradient Boosting models
+    Main function for Random Forest models
     
     Uses Model 6 (kitchen sink) predictors - no feature selection needed
-    since boosting automatically handles feature importance.
+    since Random Forest automatically handles feature importance.
     """
     curr_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(
@@ -389,7 +416,7 @@ def main():
     )
 
     # Model 6: Kitchen sink (all potentially relevant features)
-    # No feature selection needed - boosting handles it automatically
+    # No feature selection needed - Random Forest handles it automatically
     PREDICTORS = [
         "surface_type",
         "Avg_Temp",
@@ -413,10 +440,10 @@ def main():
     ]
 
     print("\n" + "=" * 70)
-    print("GRADIENT BOOSTING MODELS")
+    print("RANDOM FOREST MODELS")
     print("=" * 70)
     print(f"Using {len(PREDICTORS)} predictors from Model 6 (kitchen sink)")
-    print("Boosting automatically handles feature importance and selection")
+    print("Random Forest automatically handles feature importance and selection")
     print("=" * 70)
 
     # Load and prepare data
@@ -443,35 +470,42 @@ def main():
     print("Grid search performs 10-fold CV WITHIN the training set (80%)")
     print("The test set (20%) is never touched during this step")
     
-    # Define grid search parameters
-    N_ESTIMATORS_GRID = [300, 500, 800, 1200]
-    LEARNING_RATE_GRID = [0.01, 0.03, 0.05, 0.1]
-    MAX_DEPTH_GRID = [1, 2, 3, 4]
+    # Define grid search parameters for Random Forest
+    # These are typical ranges for RF hyperparameters
+    N_ESTIMATORS_GRID = [100, 200, 300, 500]
+    MAX_DEPTH_GRID = [10, 20, 30, None]  # None = unlimited depth
+    MIN_SAMPLES_SPLIT_GRID = [2, 5, 10]
+    MIN_SAMPLES_LEAF_GRID = [1, 2, 4]
+    MAX_FEATURES_GRID = ['sqrt', 'log2', 0.5]  # sqrt is default, often works well
     
     # Tune hyperparameters for COUNT model (on training data only)
     print("\n" + "=" * 70)
     print("COUNT MODEL: Hyperparameter Tuning")
     print("=" * 70)
-    count_tuning = tune_boosting_hyperparameters(
+    count_tuning = tune_random_forest_hyperparameters(
         train_df=train_df,  # ← Only the 80% training data
         predictors=PREDICTORS,
         is_log_target=False,
         n_estimators_grid=N_ESTIMATORS_GRID,
-        learning_rate_grid=LEARNING_RATE_GRID,
         max_depth_grid=MAX_DEPTH_GRID,
+        min_samples_split_grid=MIN_SAMPLES_SPLIT_GRID,
+        min_samples_leaf_grid=MIN_SAMPLES_LEAF_GRID,
+        max_features_grid=MAX_FEATURES_GRID,
     )
     
     # Tune hyperparameters for LOG model (on training data only)
     print("\n" + "=" * 70)
     print("LOG-TRANSFORMED MODEL: Hyperparameter Tuning")
     print("=" * 70)
-    log_tuning = tune_boosting_hyperparameters(
+    log_tuning = tune_random_forest_hyperparameters(
         train_df=train_df,  # ← Only the 80% training data
         predictors=PREDICTORS,
         is_log_target=True,
         n_estimators_grid=N_ESTIMATORS_GRID,
-        learning_rate_grid=LEARNING_RATE_GRID,
         max_depth_grid=MAX_DEPTH_GRID,
+        min_samples_split_grid=MIN_SAMPLES_SPLIT_GRID,
+        min_samples_leaf_grid=MIN_SAMPLES_LEAF_GRID,
+        max_features_grid=MAX_FEATURES_GRID,
     )
     
     # ========================================================================
@@ -485,15 +519,17 @@ def main():
     print("Retraining on FULL training set (80%), evaluating on held-out test set (20%)")
     
     # ========================================================================
-    # GRADIENT BOOSTING ON COUNT DATA (Final Model)
+    # RANDOM FOREST ON COUNT DATA (Final Model)
     # ========================================================================
     print("\n" + "=" * 70)
     print("FINAL COUNT MODEL")
     print("=" * 70)
     print(f"Best hyperparameters from grid search:")
     print(f"  • n_estimators: {count_tuning['best_n_estimators']}")
-    print(f"  • learning_rate: {count_tuning['best_learning_rate']}")
     print(f"  • max_depth: {count_tuning['best_max_depth']}")
+    print(f"  • min_samples_split: {count_tuning['best_min_samples_split']}")
+    print(f"  • min_samples_leaf: {count_tuning['best_min_samples_leaf']}")
+    print(f"  • max_features: {count_tuning['best_max_features']}")
     print(f"  • Best CV RMSE: {count_tuning['best_cv_rmse']:.4f}")
     
     count_results = {}
@@ -503,25 +539,29 @@ def main():
         test_df=test_df,    # ← Held-out 20% for final evaluation
         predictors=PREDICTORS,
         results=count_results,
-        model_name="boosting_count",
+        model_name="random_forest_count",
         is_log_target=False,
-        n_estimators=1200,
-        learning_rate=0.01,
-        max_depth=3,
+        n_estimators=count_tuning['best_n_estimators'],
+        max_depth=count_tuning['best_max_depth'],
+        min_samples_split=count_tuning['best_min_samples_split'],
+        min_samples_leaf=count_tuning['best_min_samples_leaf'],
+        max_features=count_tuning['best_max_features'],
     )
-    
-    graph_boosting_model(count_model, "boosting_count", is_best=False)
+    print("graphing random forest count model")
+    graph_random_forest_model(count_model, "random_forest_count", is_best=False)
 
     # ========================================================================
-    # GRADIENT BOOSTING ON LOG-TRANSFORMED DATA (Final Model)
+    # RANDOM FOREST ON LOG-TRANSFORMED DATA (Final Model)
     # ========================================================================
     print("\n" + "=" * 70)
     print("FINAL LOG-TRANSFORMED MODEL")
     print("=" * 70)
     print(f"Best hyperparameters from grid search:")
     print(f"  • n_estimators: {log_tuning['best_n_estimators']}")
-    print(f"  • learning_rate: {log_tuning['best_learning_rate']}")
     print(f"  • max_depth: {log_tuning['best_max_depth']}")
+    print(f"  • min_samples_split: {log_tuning['best_min_samples_split']}")
+    print(f"  • min_samples_leaf: {log_tuning['best_min_samples_leaf']}")
+    print(f"  • max_features: {log_tuning['best_max_features']}")
     print(f"  • Best CV RMSE: {log_tuning['best_cv_rmse']:.4f}")
     
     log_results = {}
@@ -531,20 +571,23 @@ def main():
         test_df=test_df,    # ← Held-out 20% for final evaluation
         predictors=PREDICTORS,
         results=log_results,
-        model_name="boosting_log",
+        model_name="random_forest_log",
         is_log_target=True,
         n_estimators=log_tuning['best_n_estimators'],
-        learning_rate=log_tuning['best_learning_rate'],
         max_depth=log_tuning['best_max_depth'],
+        min_samples_split=log_tuning['best_min_samples_split'],
+        min_samples_leaf=log_tuning['best_min_samples_leaf'],
+        max_features=log_tuning['best_max_features'],
     )
     
-    graph_boosting_model(log_model, "boosting_log", is_best=False)
+    print("graphing random forest log model")
+    graph_random_forest_model(log_model, "random_forest_log", is_best=False)
 
     # ========================================================================
     # SUMMARY
     # ========================================================================
     print("\n" + "=" * 70)
-    print("✅ GRADIENT BOOSTING TRAINING COMPLETE!")
+    print("✅ RANDOM FOREST TRAINING COMPLETE!")
     print("=" * 70)
     
     print(f"\n{'='*70}")
@@ -553,8 +596,10 @@ def main():
     
     print(f"\n🎯 COUNT MODEL - Best Hyperparameters (from grid search):")
     print(f"   • n_estimators: {count_tuning['best_n_estimators']}")
-    print(f"   • learning_rate: {count_tuning['best_learning_rate']}")
     print(f"   • max_depth: {count_tuning['best_max_depth']}")
+    print(f"   • min_samples_split: {count_tuning['best_min_samples_split']}")
+    print(f"   • min_samples_leaf: {count_tuning['best_min_samples_leaf']}")
+    print(f"   • max_features: {count_tuning['best_max_features']}")
     print(f"   • Grid Search Best CV RMSE: {count_tuning['best_cv_rmse']:.4f}")
     print(f"\n   Final Model Performance:")
     print(f"   • CV R²: {count_model['10foldCV']['val_r2']:.4f}")
@@ -564,8 +609,10 @@ def main():
     
     print(f"\n🎯 LOG-TRANSFORMED MODEL - Best Hyperparameters (from grid search):")
     print(f"   • n_estimators: {log_tuning['best_n_estimators']}")
-    print(f"   • learning_rate: {log_tuning['best_learning_rate']}")
     print(f"   • max_depth: {log_tuning['best_max_depth']}")
+    print(f"   • min_samples_split: {log_tuning['best_min_samples_split']}")
+    print(f"   • min_samples_leaf: {log_tuning['best_min_samples_leaf']}")
+    print(f"   • max_features: {log_tuning['best_max_features']}")
     print(f"   • Grid Search Best CV RMSE: {log_tuning['best_cv_rmse']:.4f}")
     print(f"\n   Final Model Performance:")
     print(f"   • CV R²: {log_model['10foldCV']['val_r2']:.4f}")
@@ -573,7 +620,7 @@ def main():
     print(f"   • CV RMSE: {np.sqrt(log_model['10foldCV']['val_mse']):.4f}")
     print(f"   • Test RMSE: {np.sqrt(log_model['10foldCV']['test_mse']):.4f}")
     
-    print(f"\n📁 All plots saved to: plots/boosting/")
+    print(f"\n📁 All plots saved to: plots/random_forest/")
     print("=" * 70 + "\n")
 
 

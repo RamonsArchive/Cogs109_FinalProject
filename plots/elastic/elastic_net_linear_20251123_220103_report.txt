@@ -54,7 +54,7 @@ ADDITIONAL METRICS:
   • Predicted Range:   1.76
 
 MODEL INTERPRETATION:
-  • R² = 28.5% means the model explains 28.5% of variance
+  • R² = 28.5% means  the model explains 28.5% of variance
   • Adjusted R² = 21.7% accounts for model complexity
   • Predictions range from -0.10 to 1.66
   • Actual values range from 0.00 to 2.40

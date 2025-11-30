@@ -4,7 +4,7 @@
 MODEL REPORT: boosting_count
 MODEL TYPE: Gradient Boosting (Count Data)
 ======================================================================
-Timestamp: 2025-11-23 22:00:43
+Timestamp: 2025-11-30 00:25:37
 
 HYPERPARAMETERS:
   • n_estimators (B trees):     1200

@@ -1,0 +1,50 @@
+
+======================================================================
+
+MODEL REPORT: random_forest_count
+MODEL TYPE: Random Forest (Count Data)
+======================================================================
+Timestamp: 2025-11-30 01:12:00
+
+HYPERPARAMETERS:
+  • n_estimators (trees):        300
+  • max_depth:                   20
+  • min_samples_split:           2
+  • min_samples_leaf:            2
+  • max_features:                0.5
+
+PREDICTORS (19):
+surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • R²:                0.0504
+  • MSE:               3.8325
+  • RMSE:              1.9577
+  • MAE:               1.5532
+
+TEST SET RESULTS:
+  • R²:                0.1461
+  • Adjusted R²:       0.0654
+  • MSE:               3.8198
+  • RMSE:              1.9544
+  • MAE:               1.4998
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:               0.9967
+  • MAE:               0.9656
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • Mean Actual:       2.90
+  • Mean Predicted:    2.97
+  • Actual Range:      10.00
+  • Predicted Range:   4.56
+
+MODEL INTERPRETATION:
+  • R² = 14.6% means the model explains 14.6% of variance
+  • Adjusted R² = 6.5% accounts for model complexity
+  • Predictions range from 0.13 to 4.69
+  • Actual values range from 0.00 to 10.00
+
+======================================================================

@@ -1,0 +1,69 @@
+
+======================================================================
+
+MODEL REPORT: random_forest_log
+MODEL TYPE: Random Forest (Log-Transformed Target)
+======================================================================
+Timestamp: 2025-11-30 01:12:05
+
+HYPERPARAMETERS:
+  • n_estimators (trees):        100
+  • max_depth:                   10
+  • min_samples_split:           2
+  • min_samples_leaf:            1
+  • max_features:                0.5
+
+PREDICTORS (19):
+surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • R²:                0.1809
+  • MSE:               0.2733
+  • RMSE:              0.5228
+  • MAE:               0.4078
+
+CROSS-VALIDATION RESULTS (10-fold) - ORIGINAL SCALE:
+  • MSE:               3.9054
+  • RMSE:              1.9762
+  • MAE:               1.5001
+
+TEST SET RESULTS:
+  • R²:                0.1109
+  • Adjusted R²:       0.0268
+  • MSE:               3.9773
+  • RMSE:              1.9943
+  • MAE:               1.4496
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:               14.5538
+  • MAE:               3.5545
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ORIGINAL SCALE METRICS (after expm1 transformation):
+  • Mean:              2.52 injuries
+  • MSE:               3.9773 injuries
+  • RMSE:              1.9943 injuries
+  • MAE:               1.4496 injuries
+  • R²:                0.1109
+  • Adjusted R²:       0.0268
+  • Pred Range:        [0.01, 3.85]
+
+ADDITIONAL METRICS:
+  • Mean Actual:       2.90
+  • Mean Predicted:    2.52
+  • Actual Range:      10.00
+  • Predicted Range:   3.83
+
+MODEL INTERPRETATION:
+  • R² = 11.1% means the model explains 11.1% of variance
+  • Adjusted R² = 2.7% accounts for model complexity
+  • Predictions range from 0.01 to 3.85
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Potential overfitting detected
+   - Test error is significantly higher than CV error
+   - MSE ratio: 14.55, MAE ratio: 3.55
+   - Consider: more regularization, simpler model, or more training data
+
+======================================================================
