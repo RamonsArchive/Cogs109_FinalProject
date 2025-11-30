@@ -1,0 +1,50 @@
+
+======================================================================
+
+MODEL REPORT: nn_count
+MODEL TYPE: Neural Network (Count Data)
+======================================================================
+Timestamp: 2025-11-30 14:58:09
+
+HYPERPARAMETERS:
+  • Architecture (hidden_layer_sizes): (100,)
+  • Learning rate (learning_rate_init): 0.0001
+  • Alpha (L2 regularization): 0.0001
+  • Batch size: auto
+  • Activation: relu
+  • Solver: adam
+  • Iterations completed: 321
+  • Total parameters: 8,601
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Training R²:       0.3338
+  • Validation R²:    0.0415
+  • Training RMSE:    1.6469
+  • Validation RMSE:  1.9676
+  • Training MSE:     2.7124
+  • Validation MSE:   3.8714
+
+TEST SET RESULTS:
+  • R²:                0.1409
+  • MSE:               3.8428
+  • RMSE:              1.9603
+  • MAE:               1.5452
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:               0.9926
+  • MAE:               0.9843
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • Mean Actual:       2.90
+  • Mean Predicted:    2.96
+  • Actual Range:      10.00
+  • Predicted Range:   3.50
+
+MODEL INTERPRETATION:
+  • R² = 14.1% means the model explains 14.1% of variance
+  • Predictions range from 0.91 to 4.41
+  • Actual values range from 0.00 to 10.00
+
+======================================================================

@@ -447,28 +447,25 @@ def main():
         "distance_miles",
     ]
     
-    # Categorical features (will be one-hot encoded)
-    CATEGORICAL_FEATURES = [
-        "surface_type",
-        "day",
-        "season",
-        "stadium",
-        "surface",
-        "dome"
-    ]
+    # Load and prepare data FIRST
+    df = load_data(data_dir)
+    df = clean_data(df)
+    
+    # Dynamically detect categorical vs numerical columns based on actual data types
+    CATEGORICAL_FEATURES = [c for c in PREDICTORS if not pd.api.types.is_numeric_dtype(df[c])]
+    NUMERICAL_FEATURES = [c for c in PREDICTORS if pd.api.types.is_numeric_dtype(df[c])]
 
     print("\n" + "=" * 70)
     print("NEURAL NETWORK MODELS")
     print("=" * 70)
     print(f"Using {len(PREDICTORS)} predictors from Model 6 (kitchen sink)")
-    print(f"  • {len(CATEGORICAL_FEATURES)} categorical features (one-hot encoded)")
-    print(f"  • {len(PREDICTORS) - len(CATEGORICAL_FEATURES)} numerical features (standardized)")
-    print("Neural networks require proper feature scaling and encoding")
+    print(f"\n📊 Dynamically detected feature types:")
+    print(f"  • {len(CATEGORICAL_FEATURES)} categorical features (one-hot encoded):")
+    print(f"    {CATEGORICAL_FEATURES}")
+    print(f"  • {len(NUMERICAL_FEATURES)} numerical features (standardized):")
+    print(f"    {NUMERICAL_FEATURES}")
+    print("\nNeural networks require proper feature scaling and encoding")
     print("=" * 70)
-
-    # Load and prepare data
-    df = load_data(data_dir)
-    df = clean_data(df)
 
     # ========================================================================
     # STEP 1: ONE SPLIT - Create held-out test set (NEVER touch until end)
@@ -497,10 +494,14 @@ def main():
         (100, 50),       # Medium: 2 layers
         (100, 100),      # Medium: 2 layers, same size
         (200, 100),      # Wider: 2 layers
+        (200, 150),      # Wider: 2 layers
         (100, 50, 25),   # Deep: 3 layers
+        (100, 75, 50),   # Deep: 3 layers
+        (100, 50, 25, 10), # Deep: 4 layers
+        (100, 75, 50, 25), # Deep: 4 layers
     ]
-    LEARNING_RATE_INIT_GRID = [0.0001, 0.001, 0.01]
-    ALPHA_GRID = [0.0001, 0.001, 0.01, 0.1]  # L2 regularization
+    LEARNING_RATE_INIT_GRID = [0.0001, 0.001, 0.01, 0.03]
+    ALPHA_GRID = [0, 0.0001, 0.001, 0.01, 0.1]  # L2 regularization (0 = no regularization)
     BATCH_SIZE_GRID = [32, 64, 128, 'auto']
     
     # Tune hyperparameters for COUNT model (on training data only)
