@@ -547,7 +547,6 @@ def main():
         min_samples_leaf=count_tuning['best_min_samples_leaf'],
         max_features=count_tuning['best_max_features'],
     )
-    print("graphing random forest count model")
     graph_random_forest_model(count_model, "random_forest_count", is_best=False)
 
     # ========================================================================
@@ -580,7 +579,6 @@ def main():
         max_features=log_tuning['best_max_features'],
     )
     
-    print("graphing random forest log model")
     graph_random_forest_model(log_model, "random_forest_log", is_best=False)
 
     # ========================================================================

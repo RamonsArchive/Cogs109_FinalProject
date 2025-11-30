@@ -4,45 +4,45 @@
 MODEL REPORT: boosting_count
 MODEL TYPE: Gradient Boosting (Count Data)
 ======================================================================
-Timestamp: 2025-11-30 00:25:37
+Timestamp: 2025-11-30 12:52:56
 
 HYPERPARAMETERS:
-  • n_estimators (B trees):     1200
-  • learning_rate (shrinkage):  0.01
-  • max_depth (splits):         3
+  • n_estimators (B trees):     300
+  • learning_rate (shrinkage):  0.03
+  • max_depth (splits):         2
 
 PREDICTORS (19):
 surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
 
 CROSS-VALIDATION RESULTS (10-fold):
-  • R²:                0.0558
-  • MSE:               3.8099
-  • RMSE:              1.9519
-  • MAE:               1.5309
+  • R²:                0.0796
+  • MSE:               3.7113
+  • RMSE:              1.9265
+  • MAE:               1.5140
 
 TEST SET RESULTS:
-  • R²:                0.1538
-  • Adjusted R²:       0.0738
-  • MSE:               3.7854
-  • RMSE:              1.9456
-  • MAE:               1.4985
+  • R²:                0.1383
+  • Adjusted R²:       0.0569
+  • MSE:               3.8546
+  • RMSE:              1.9633
+  • MAE:               1.5149
 
 GENERALIZATION (Test/CV ratio):
-  • MSE:               0.9935
-  • MAE:               0.9788
+  • MSE:               1.0386
+  • MAE:               1.0006
   
   Note: Ratio > 1.1 suggests overfitting
 
 ADDITIONAL METRICS:
   • Mean Actual:       2.90
-  • Mean Predicted:    2.97
+  • Mean Predicted:    2.96
   • Actual Range:      10.00
-  • Predicted Range:   4.50
+  • Predicted Range:   3.77
 
 MODEL INTERPRETATION:
-  • R² = 15.4% means the model explains 15.4% of variance
-  • Adjusted R² = 7.4% accounts for model complexity
-  • Predictions range from 0.19 to 4.69
+  • R² = 13.8% means the model explains 13.8% of variance
+  • Adjusted R² = 5.7% accounts for model complexity
+  • Predictions range from 0.56 to 4.33
   • Actual values range from 0.00 to 10.00
 
 ======================================================================

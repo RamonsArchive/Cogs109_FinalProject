@@ -4,7 +4,7 @@
 MODEL REPORT: boosting_log
 MODEL TYPE: Gradient Boosting (Log-Transformed Target)
 ======================================================================
-Timestamp: 2025-11-30 00:25:44
+Timestamp: 2025-11-30 12:53:02
 
 HYPERPARAMETERS:
   • n_estimators (B trees):     800

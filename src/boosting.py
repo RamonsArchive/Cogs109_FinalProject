@@ -505,9 +505,9 @@ def main():
         results=count_results,
         model_name="boosting_count",
         is_log_target=False,
-        n_estimators=1200,
-        learning_rate=0.01,
-        max_depth=3,
+        n_estimators=count_tuning['best_n_estimators'],
+        learning_rate=count_tuning['best_learning_rate'],
+        max_depth=count_tuning['best_max_depth'],
     )
     
     graph_boosting_model(count_model, "boosting_count", is_best=False)
