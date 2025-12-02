@@ -254,6 +254,20 @@ def train_model(
         test_f1 = f1_score(y_test, y_pred)
         test_roc_auc = roc_auc_score(y_test, y_pred_proba)
         test_log_loss_val = log_loss(y_test, y_pred_proba)
+        
+        # Calculate naive baseline (majority class predictor)
+        majority_class = np.bincount(y_test).argmax()
+        naive_baseline_pred = np.full_like(y_test, majority_class)
+        naive_baseline_accuracy = accuracy_score(y_test, naive_baseline_pred)
+        naive_baseline_f1 = f1_score(y_test, naive_baseline_pred)
+        
+        # For ROC-AUC, use class proportions as "probabilities"
+        class_proportions = np.bincount(y_test) / len(y_test)
+        naive_baseline_proba = np.full(len(y_test), class_proportions[1])
+        try:
+            naive_baseline_roc_auc = roc_auc_score(y_test, naive_baseline_proba)
+        except:
+            naive_baseline_roc_auc = 0.5  # If only one class, ROC-AUC is undefined
 
         print(f"\n[Test] Accuracy:  {test_accuracy:.4f}")
         print(f"[Test] Precision: {test_precision:.4f}")
@@ -261,6 +275,13 @@ def train_model(
         print(f"[Test] F1 Score:  {test_f1:.4f}")
         print(f"[Test] ROC-AUC:   {test_roc_auc:.4f}")
         print(f"[Test] Log Loss:  {test_log_loss_val:.4f}")
+        print(f"\n[Naive Baseline] (predicting majority class: {majority_class})")
+        print(f"  Accuracy:  {naive_baseline_accuracy:.4f}")
+        print(f"  F1 Score:  {naive_baseline_f1:.4f}")
+        print(f"  ROC-AUC:   {naive_baseline_roc_auc:.4f}")
+        print(f"  Improvement over baseline:")
+        print(f"    Accuracy:  {((test_accuracy - naive_baseline_accuracy) / naive_baseline_accuracy * 100):+.2f}%")
+        print(f"    ROC-AUC:   {((test_roc_auc - naive_baseline_roc_auc) / naive_baseline_roc_auc * 100):+.2f}%")
     else:
         test_mse = mean_squared_error(y_test, y_pred)
         test_mae = mean_absolute_error(y_test, y_pred)
@@ -358,6 +379,12 @@ def train_model(
             "pipeline": pipeline,
             "coefficients": coefficients,
             "feature_names": feature_names,
+            "naive_baseline": {
+                "accuracy": naive_baseline_accuracy,
+                "f1": naive_baseline_f1,
+                "roc_auc": naive_baseline_roc_auc,
+                "majority_class": int(majority_class),
+            },
         }
     else:
         cv_dict = {
@@ -482,6 +509,20 @@ def use_best_model(
         test_f1 = f1_score(y_test, y_pred)
         test_roc_auc = roc_auc_score(y_test, y_pred_proba)
         test_log_loss_val = log_loss(y_test, y_pred_proba)
+        
+        # Calculate naive baseline (majority class predictor)
+        majority_class = np.bincount(y_test).argmax()
+        naive_baseline_pred = np.full_like(y_test, majority_class)
+        naive_baseline_accuracy = accuracy_score(y_test, naive_baseline_pred)
+        naive_baseline_f1 = f1_score(y_test, naive_baseline_pred)
+        
+        # For ROC-AUC, use class proportions as "probabilities"
+        class_proportions = np.bincount(y_test) / len(y_test)
+        naive_baseline_proba = np.full(len(y_test), class_proportions[1])
+        try:
+            naive_baseline_roc_auc = roc_auc_score(y_test, naive_baseline_proba)
+        except:
+            naive_baseline_roc_auc = 0.5
 
         print(f"\n[FINAL TEST] Accuracy:  {test_accuracy:.4f}")
         print(f"[FINAL TEST] Precision: {test_precision:.4f}")
@@ -489,6 +530,13 @@ def use_best_model(
         print(f"[FINAL TEST] F1 Score:  {test_f1:.4f}")
         print(f"[FINAL TEST] ROC-AUC:   {test_roc_auc:.4f}")
         print(f"[FINAL TEST] Log Loss:  {test_log_loss_val:.4f}")
+        print(f"\n[Naive Baseline] (predicting majority class: {majority_class})")
+        print(f"  Accuracy:  {naive_baseline_accuracy:.4f}")
+        print(f"  F1 Score:  {naive_baseline_f1:.4f}")
+        print(f"  ROC-AUC:   {naive_baseline_roc_auc:.4f}")
+        print(f"  Improvement over baseline:")
+        print(f"    Accuracy:  {((test_accuracy - naive_baseline_accuracy) / naive_baseline_accuracy * 100):+.2f}%")
+        print(f"    ROC-AUC:   {((test_roc_auc - naive_baseline_roc_auc) / naive_baseline_roc_auc * 100):+.2f}%")
     else:
         test_mse = mean_squared_error(y_test, y_pred)
         test_mae = mean_absolute_error(y_test, y_pred)
@@ -522,6 +570,29 @@ def use_best_model(
     # Combine train_df and test_df for full dataset (for plotting)
     full_df = pd.concat([train_df, test_df], ignore_index=True)
 
+    # Calculate naive baseline for logistic regression
+    naive_baseline = None
+    if model_type == "logistic":
+        majority_class = np.bincount(y_test).argmax()
+        naive_baseline_pred = np.full_like(y_test, majority_class)
+        naive_baseline_accuracy = accuracy_score(y_test, naive_baseline_pred)
+        naive_baseline_f1 = f1_score(y_test, naive_baseline_pred)
+        
+        # For ROC-AUC, use class proportions as "probabilities"
+        class_proportions = np.bincount(y_test) / len(y_test)
+        naive_baseline_proba = np.full(len(y_test), class_proportions[1])
+        try:
+            naive_baseline_roc_auc = roc_auc_score(y_test, naive_baseline_proba)
+        except:
+            naive_baseline_roc_auc = 0.5
+        
+        naive_baseline = {
+            "accuracy": naive_baseline_accuracy,
+            "f1": naive_baseline_f1,
+            "roc_auc": naive_baseline_roc_auc,
+            "majority_class": int(majority_class),
+        }
+
     best_model_results = {
         "10foldCV": original_cv_results,
         "y_test": y_test,
@@ -536,6 +607,7 @@ def use_best_model(
         "is_binary": is_binary,
         "coefficients": coefficients,
         "feature_names": feature_names,
+        "naive_baseline": naive_baseline,
     }
 
     return best_model_results

@@ -1,0 +1,56 @@
+
+======================================================================
+
+MODEL REPORT: Polynomial Degree 4
+MODEL TYPE: LINEAR
+======================================================================
+Timestamp: 2025-12-02 02:10:22
+
+PREDICTORS (19):
+surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
+
+  • Polynomial Degree: 4
+  • Actual Features After Transformation: 2456
+  • Polynomial applied to numeric predictors only
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              67.6717
+  • RMSE:             8.2263
+  • MAE:              4.7562
+
+TEST SET RESULTS:
+  • MSE:              115.9821
+  • RMSE:             10.7695
+  • MAE:              5.5042
+  • R²:                -24.9274
+  • Adjusted R²:       -27.3783
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              1.7139
+  • MAE:              1.1573
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         -24.9274
+  • Adjusted R²:       -27.3783
+  • Mean Actual:      2.90
+  • Mean Predicted:   2.76
+  • Actual Range:     10.00
+  • Predicted Range:  146.91
+
+MODEL INTERPRETATION:
+  • R² = -2492.7% means the model explains -2492.7% of variance
+  • Adjusted R² = -2737.8% accounts for model complexity
+  • Predictions range from -36.03 to 110.89
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Very low R² (-24.9274)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+⚠️  WARNING: Potential overfitting detected
+   - Test error is significantly higher than CV error
+   - MSE ratio: 1.71, MAE ratio: 1.16
+   - Consider: more regularization, simpler model, or more training data
+
+======================================================================

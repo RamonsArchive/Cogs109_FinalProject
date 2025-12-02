@@ -1,0 +1,46 @@
+
+======================================================================
+
+MODEL REPORT: game_intensity_binary (Model 3)
+MODEL TYPE: LOGISTIC
+======================================================================
+Timestamp: 2025-12-02 15:42:38
+
+PREDICTORS (13):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Accuracy:         0.5520
+  • Precision:        0.2393
+  • Recall:           0.4701
+  • F1 Score:         0.3132
+  • ROC-AUC:          0.5440
+  • Log Loss:         0.6952
+
+TEST SET RESULTS:
+  • Accuracy:         0.4253
+  • Precision:        0.2208
+  • Recall:           0.8293
+  • F1 Score:         0.3487
+  • ROC-AUC:          0.6127
+  • Log Loss:         0.6770
+
+NAIVE BASELINE (Majority Class Predictor):
+  • Strategy: Always predict class 0 (most common class)
+  • Accuracy:         0.8145
+  • F1 Score:         0.0000
+  • ROC-AUC:          0.5000
+  
+  Model Improvement over Baseline:
+  • Accuracy:         -47.78%
+  • F1 Score:         N/A
+  • ROC-AUC:          +22.55%
+
+GENERALIZATION (Test/CV ratio):
+  • Accuracy:         0.7705
+  • ROC-AUC:          1.1263
+  • F1 Score:         1.1135
+  
+  Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
+
+======================================================================

@@ -1,0 +1,48 @@
+
+======================================================================
+
+MODEL REPORT: rest_travel (Model 4)
+MODEL TYPE: POISSON
+======================================================================
+Timestamp: 2025-12-02 15:40:35
+
+PREDICTORS (11):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              4.0135
+  • RMSE:             2.0034
+  • MAE:              1.5908
+
+TEST SET RESULTS:
+  • MSE:              4.2732
+  • RMSE:             2.0672
+  • MAE:              1.6101
+  • R²:                0.0447
+  • Adjusted R²:       -0.0055
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              1.0647
+  • MAE:              1.0122
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.0447
+  • Adjusted R²:       -0.0055
+  • Mean Actual:      2.90
+  • Mean Predicted:   3.01
+  • Actual Range:     10.00
+  • Predicted Range:  1.09
+
+MODEL INTERPRETATION:
+  • R² = 4.5% means the model explains 4.5% of variance
+  • Adjusted R² = -0.6% accounts for model complexity
+  • Predictions range from 2.51 to 3.59
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Very low R² (0.0447)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+======================================================================

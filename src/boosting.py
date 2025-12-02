@@ -353,7 +353,7 @@ def tune_boosting_hyperparameters(
     print(f"  • learning_rate: {best_params['model__learning_rate']}")
     print(f"  • max_depth: {best_params['model__max_depth']}")
     
-    # Get top 5 combinations
+    # Get top 5 combinations for display
     results_df = pd.DataFrame(grid_search.cv_results_)
     results_df['mean_test_rmse'] = np.sqrt(-results_df['mean_test_score'])
     top_5 = results_df.nsmallest(5, 'mean_test_rmse')[
@@ -364,6 +364,26 @@ def tune_boosting_hyperparameters(
     print(f"\n📊 Top 5 hyperparameter combinations:")
     print(top_5.to_string(index=False))
     
+    # Get top 3 combinations for training
+    top_3 = results_df.nsmallest(3, 'mean_test_rmse')
+    top_3_combinations = []
+    for idx, row in top_3.iterrows():
+        top_3_combinations.append({
+            "n_estimators": row['param_model__n_estimators'],
+            "learning_rate": row['param_model__learning_rate'],
+            "max_depth": row['param_model__max_depth'],
+            "cv_rmse": row['mean_test_rmse'],
+            "cv_mse": -row['mean_test_score'],
+            "rank": len(top_3_combinations) + 1
+        })
+    
+    print(f"\n🏆 Top 3 combinations selected for training:")
+    for i, combo in enumerate(top_3_combinations, 1):
+        print(f"  {i}. n_estimators={combo['n_estimators']}, "
+              f"learning_rate={combo['learning_rate']}, "
+              f"max_depth={combo['max_depth']}, "
+              f"CV RMSE={combo['cv_rmse']:.4f}")
+    
     return {
         "best_n_estimators": best_params['model__n_estimators'],
         "best_learning_rate": best_params['model__learning_rate'],
@@ -372,6 +392,7 @@ def tune_boosting_hyperparameters(
         "best_cv_rmse": np.sqrt(best_score),
         "grid_search": grid_search,
         "results_df": results_df,
+        "top_3_combinations": top_3_combinations,  # Add top 3 for training
     }
 
 
@@ -472,32 +493,52 @@ def main():
     print("Retraining on FULL training set (80%), evaluating on held-out test set (20%)")
     
     # ========================================================================
-    # GRADIENT BOOSTING ON COUNT DATA (Final Model)
+    # GRADIENT BOOSTING ON COUNT DATA (Top 3 Models)
     # ========================================================================
     print("\n" + "=" * 70)
-    print("FINAL COUNT MODEL")
+    print("TRAINING TOP 3 COUNT MODELS")
     print("=" * 70)
-    print(f"Best hyperparameters from grid search:")
-    print(f"  • n_estimators: {count_tuning['best_n_estimators']}")
-    print(f"  • learning_rate: {count_tuning['best_learning_rate']}")
-    print(f"  • max_depth: {count_tuning['best_max_depth']}")
-    print(f"  • Best CV RMSE: {count_tuning['best_cv_rmse']:.4f}")
+    print("Training the top 3 hyperparameter combinations from grid search")
+    print("Each model will be trained and evaluated separately")
     
     count_results = {}
+    count_models = []
     
-    count_model = train_final_model(
-        train_df=train_df,  # ← Full 80% for training
-        test_df=test_df,    # ← Held-out 20% for final evaluation
-        predictors=PREDICTORS,
-        results=count_results,
-        model_name="boosting_count",
-        is_log_target=False,
-        n_estimators=count_tuning['best_n_estimators'],
-        learning_rate=count_tuning['best_learning_rate'],
-        max_depth=count_tuning['best_max_depth'],
-    )
-    
-    graph_boosting_model(count_model, "boosting_count", is_best=False)
+    # Train all top 3 models
+    for i, combo in enumerate(count_tuning['top_3_combinations'], 1):
+        print(f"\n{'='*70}")
+        print(f"COUNT MODEL #{i} (Rank {combo['rank']} from grid search)")
+        print(f"{'='*70}")
+        print(f"Hyperparameters:")
+        print(f"  • n_estimators: {combo['n_estimators']}")
+        print(f"  • learning_rate: {combo['learning_rate']}")
+        print(f"  • max_depth: {combo['max_depth']}")
+        print(f"  • Grid Search CV RMSE: {combo['cv_rmse']:.4f}")
+        
+        model_name = f"boosting_count_rank{combo['rank']}"
+        
+        count_model = train_final_model(
+            train_df=train_df,  # ← Full 80% for training
+            test_df=test_df,    # ← Held-out 20% for final evaluation
+            predictors=PREDICTORS,
+            results=count_results,
+            model_name=model_name,
+            is_log_target=False,
+            n_estimators=combo['n_estimators'],
+            learning_rate=combo['learning_rate'],
+            max_depth=combo['max_depth'],
+        )
+        
+        count_models.append({
+            "model": count_model,
+            "name": model_name,
+            "rank": combo['rank'],
+            "hyperparams": combo
+        })
+        
+        # Graph each model
+        is_best = (combo['rank'] == 1)  # Mark rank 1 as best
+        graph_boosting_model(count_model, model_name, is_best=is_best)
 
     # ========================================================================
     # SUMMARY
@@ -507,21 +548,32 @@ def main():
     print("=" * 70)
     
     print(f"\n{'='*70}")
-    print("📊 FINAL RESULTS SUMMARY")
+    print("📊 FINAL RESULTS SUMMARY - TOP 3 MODELS")
     print(f"{'='*70}")
     
-    print(f"\n🎯 COUNT MODEL - Best Hyperparameters (from grid search):")
-    print(f"   • n_estimators: {count_tuning['best_n_estimators']}")
-    print(f"   • learning_rate: {count_tuning['best_learning_rate']}")
-    print(f"   • max_depth: {count_tuning['best_max_depth']}")
-    print(f"   • Grid Search Best CV RMSE: {count_tuning['best_cv_rmse']:.4f}")
-    print(f"\n   Final Model Performance:")
-    print(f"   • CV R²: {count_model['10foldCV']['val_r2']:.4f}")
-    print(f"   • Test R²: {count_model['10foldCV']['test_r2']:.4f}")
-    print(f"   • CV RMSE: {np.sqrt(count_model['10foldCV']['val_mse']):.4f}")
-    print(f"   • Test RMSE: {np.sqrt(count_model['10foldCV']['test_mse']):.4f}")
+    # Summary for all top 3 models
+    for model_info in count_models:
+        model = model_info["model"]
+        combo = model_info["hyperparams"]
+        rank = model_info["rank"]
+        
+        print(f"\n🎯 COUNT MODEL #{rank} (Rank {rank} from grid search):")
+        print(f"   Hyperparameters:")
+        print(f"   • n_estimators: {combo['n_estimators']}")
+        print(f"   • learning_rate: {combo['learning_rate']}")
+        print(f"   • max_depth: {combo['max_depth']}")
+        print(f"   • Grid Search CV RMSE: {combo['cv_rmse']:.4f}")
+        print(f"\n   Final Model Performance:")
+        print(f"   • CV R²: {model['10foldCV']['val_r2']:.4f}")
+        print(f"   • Test R²: {model['10foldCV']['test_r2']:.4f}")
+        print(f"   • CV RMSE: {np.sqrt(model['10foldCV']['val_mse']):.4f}")
+        print(f"   • Test RMSE: {np.sqrt(model['10foldCV']['test_mse']):.4f}")
+        print(f"   • Model name: {model_info['name']}")
     
     print(f"\n📁 All plots saved to: plots/boosting/")
+    print(f"   • Rank 1 (best): boosting_count_rank1_* (marked as BEST)")
+    print(f"   • Rank 2: boosting_count_rank2_*")
+    print(f"   • Rank 3: boosting_count_rank3_*")
     print("=" * 70 + "\n")
 
 

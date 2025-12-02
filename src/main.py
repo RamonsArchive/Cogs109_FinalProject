@@ -207,17 +207,19 @@ def main():
         verbose=True,
     )
 
-    # Compare models with/without feature selection (on training data only)
-    compare_models_with_without_selection(
-        df=binary_train_df,  # Use training data only
-        all_predictors=REGRESSION_PREDICTORS[5],
-        selected_predictors=selected_features,
-        target_column=target_column,
-        model_type="logistic",
-        is_binary=True,
-    )
-
-    # Add selected features as Model 7 for all model types
+    # ========================================================================
+    # ADD SELECTED FEATURES AS MODEL 7
+    # ========================================================================
+    # Model 7 will be trained alongside Models 1-6 in the training loops below.
+    # The comparison between Model 6 (all features) and Model 7 (selected features)
+    # will happen automatically when use_best_model() selects the best model based
+    # on 10-fold CV performance.
+    #
+    # NOTE: We do NOT run a separate comparison here because:
+    # 1. Model 6 and Model 7 will both be trained with full 10-fold CV
+    # 2. use_best_model() will compare all models (including 6 vs 7) and select the best
+    # 3. This avoids redundant computation and ensures consistent evaluation
+    #
     REGRESSION_PREDICTORS.append(selected_features)
     model_names.append("backward_selected")
     log_model_names.append("backward_selected_log")
@@ -227,21 +229,6 @@ def main():
     print(
         f"   Will be tested across all three model types (Poisson, Logistic, Linear)\n"
     )
-
-    # NEGATIVE BINOMIAL MODELS - REMOVED
-    #
-    # Reason: No robust sklearn-compatible Negative Binomial implementation exists.
-    # - statsmodels: Too numerically unstable for cross-validation
-    # - sklearn: No native support
-    # - Alternative packages: Not sklearn-compatible
-    #
-    # Alternative: Poisson regression works well for this data.
-    # While data shows overdispersion (Var/Mean = 1.39), Poisson still provides
-    # valid point predictions. The Linear (log) model with R²=27.2% is our best model.
-    #
-    # negbin_results = {}
-    # negbin_errors = []
-    # ... (negbin training code removed)
 
     # POISSON MODELS on original counts
     print("\n" + "=" * 70)
@@ -315,12 +302,23 @@ def main():
         linear_errors.append(result_model["10foldCV"]["val_primary_metric"])
         graph_model(result_model, log_model_name, model_number=i)
 
-    # Select best from each approach (using pre-split data)
+    # ========================================================================
+    # SELECT BEST MODEL FOR EACH APPROACH
+    # ========================================================================
+    # This compares ALL models (1-7) including Model 6 vs Model 7.
+    # The best model is selected based on 10-fold CV performance.
+    # For Poisson: lowest Poisson Deviance
+    # For Logistic: highest ROC-AUC
+    # For Linear: lowest MSE
+    #
+    # NOTE: Model 6 (kitchen_sink_all) and Model 7 (backward_selected) are
+    # both included in this comparison. The best one will be selected automatically.
+    #
     best_poisson = use_best_model(
         results=poisson_results,
         df=train_df,  # Pass training data (for feature type detection)
         err_k10=poisson_errors,
-        predictors=REGRESSION_PREDICTORS,
+        predictors=REGRESSION_PREDICTORS,  # Contains all 7 models including Model 6 and Model 7
         model_type="poisson",
         is_log_target=False,
         is_binary=False,

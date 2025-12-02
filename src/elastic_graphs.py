@@ -14,6 +14,8 @@ from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
 )
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import ElasticNet
 
 # Set style
 sns.set_style("whitegrid")
@@ -311,10 +313,12 @@ def graph_elastic_net_model(
     is_log_target = model_results.get("is_log_target", False)
     alpha = model_results.get("alpha", 1.0)
     l1_ratio = model_results.get("l1_ratio", 0.5)
+    target_column = "num_injuries"
     
     # Handle Poisson models which don't have l1_ratio
     if model_type == "poisson" and l1_ratio is None:
         l1_ratio_display = "N/A (L2 only)"
+        l1_ratio = 0.5  # Default for coefficient path (won't be used for Poisson)
     else:
         l1_ratio_display = f"{l1_ratio:.3f}"
     coefficients = model_results.get("coefficients", None)
@@ -615,7 +619,140 @@ def graph_elastic_net_model(
     print(f"✓ Saved: {filename5}")
     plt.close()
     
-    # ========== 6. GENERATE TEXT REPORT ==========
+    # ========== 6. COEFFICIENT PATH PLOT ==========
+    # Only for linear models (Poisson doesn't support l1_ratio)
+    if model_type == "linear" and coefficients is not None and feature_names is not None:
+        print(f"\n📈 Generating coefficient path plot...")
+        
+        # Get the pipeline and data
+        pipeline = model_results.get("pipeline")
+        if pipeline is not None:
+            try:
+                # Extract preprocessor and get transformed feature names
+                preprocessor = pipeline.named_steps["preprocessor"]
+                
+                # Get training data for coefficient paths
+                # Split data (same random state as training)
+                RANDOM_STATE = 42
+                train_df, test_df = train_test_split(df, test_size=0.2, random_state=RANDOM_STATE)
+                X_train = train_df[predictors]
+                
+                # Prepare target (handle log transformation)
+                if is_log_target:
+                    y_train = np.log1p(train_df[target_column])
+                else:
+                    y_train = train_df[target_column].values
+                
+                # Transform features
+                X_train_transformed = preprocessor.transform(X_train)
+                
+                # Define alpha range for coefficient paths
+                alphas = np.logspace(-3, 1, 50)  # From 0.001 to 10, 50 points
+                
+                # Create coefficient path plot
+                fig6, axes = plt.subplots(1, 2, figsize=(18, 8))
+                
+                # Left panel: Coefficient paths for current l1_ratio
+                ax1 = axes[0]
+                coef_paths = []
+                
+                # Fit models with different alpha values
+                print("   Fitting models with different alpha values...")
+                for a in alphas:
+                    model = ElasticNet(alpha=a, l1_ratio=l1_ratio, max_iter=5000, random_state=RANDOM_STATE)
+                    model.fit(X_train_transformed, y_train)
+                    coef_paths.append(model.coef_)
+                
+                coef_paths = np.array(coef_paths)  # Shape: (n_alphas, n_features)
+                
+                # Plot top 20 features by absolute coefficient at final alpha
+                final_coefs = coef_paths[-1, :]
+                top_indices = np.argsort(np.abs(final_coefs))[-20:][::-1]
+                
+                # Plot coefficient paths
+                for idx in top_indices:
+                    if idx < len(feature_names):
+                        ax1.plot(np.log10(alphas), coef_paths[:, idx], 
+                                linewidth=1.5, alpha=0.7)
+                
+                # Mark current alpha
+                current_log_alpha = np.log10(alpha)
+                ax1.axvline(x=current_log_alpha, color="red", linestyle="--", 
+                           linewidth=2.5, label=f"Current α={alpha:.4f}", zorder=10)
+                
+                ax1.set_xlabel("log₁₀(α) - Regularization Strength", fontsize=12, fontweight="bold")
+                ax1.set_ylabel("Coefficient Value", fontsize=12, fontweight="bold")
+                ax1.set_title(
+                    f"Coefficient Paths: L1 Ratio = {l1_ratio:.2f}\n"
+                    f"(Top 20 features by absolute coefficient)\n"
+                    f"Lines show how coefficients shrink as α increases",
+                    fontsize=13, fontweight="bold"
+                )
+                ax1.axhline(y=0, color="black", linestyle=":", linewidth=1, alpha=0.5)
+                ax1.grid(True, alpha=0.3)
+                ax1.legend(loc="best", fontsize=10, framealpha=0.9)
+                
+                # Right panel: Compare different l1_ratio values
+                ax2 = axes[1]
+                l1_ratios_to_plot = [0.1, 0.5, 0.9]
+                if l1_ratio not in l1_ratios_to_plot:
+                    # Replace middle value with current if not in list
+                    l1_ratios_to_plot[1] = l1_ratio
+                else:
+                    # Ensure current is included
+                    if l1_ratio == 0.1:
+                        l1_ratios_to_plot = [0.1, 0.5, 0.9]
+                    elif l1_ratio == 0.9:
+                        l1_ratios_to_plot = [0.1, 0.5, 0.9]
+                
+                colors_l1 = ["#3498db", "#e74c3c", "#2ecc71"]
+                
+                print("   Comparing different L1 ratios...")
+                for l1, color in zip(l1_ratios_to_plot, colors_l1):
+                    coef_paths_l1 = []
+                    for a in alphas:
+                        model = ElasticNet(alpha=a, l1_ratio=l1, max_iter=5000, random_state=RANDOM_STATE)
+                        model.fit(X_train_transformed, y_train)
+                        coef_paths_l1.append(np.sum(np.abs(model.coef_)))  # Sum of absolute coefficients
+                    
+                    label = f"L1 Ratio = {l1:.1f}"
+                    if abs(l1 - l1_ratio) < 0.01:
+                        label += " (Current)"
+                    ax2.plot(np.log10(alphas), coef_paths_l1, 
+                            linewidth=2.5, color=color, label=label, alpha=0.8)
+                
+                # Mark current alpha
+                ax2.axvline(x=current_log_alpha, color="red", linestyle="--", 
+                           linewidth=2.5, label=f"Current α={alpha:.4f}", zorder=10)
+                
+                ax2.set_xlabel("log₁₀(α) - Regularization Strength", fontsize=12, fontweight="bold")
+                ax2.set_ylabel("Sum of |Coefficients|", fontsize=12, fontweight="bold")
+                ax2.set_title(
+                    f"Regularization Effect: L1 vs L2\n"
+                    f"Higher L1 ratio → More Lasso-like (sparse)\n"
+                    f"Lower L1 ratio → More Ridge-like (dense)",
+                    fontsize=13, fontweight="bold"
+                )
+                ax2.grid(True, alpha=0.3)
+                ax2.legend(loc="best", fontsize=10, framealpha=0.9)
+                
+                plt.suptitle(
+                    f"{title_prefix}Coefficient Path Analysis: {display_name}\n"
+                    f"Left: Individual coefficient paths | Right: Total regularization effect",
+                    fontsize=14, fontweight="bold", y=1.02
+                )
+                plt.tight_layout()
+                
+                filename6 = get_elastic_plot_path(model_name, "coefficient_paths", is_best)
+                plt.savefig(filename6, dpi=300, bbox_inches="tight")
+                print(f"✓ Saved: {filename6}")
+                plt.close()
+            except Exception as e:
+                print(f"⚠️  Could not generate coefficient paths: {e}")
+        else:
+            print("⚠️  Cannot generate coefficient paths: pipeline not available")
+    
+    # ========== 7. GENERATE TEXT REPORT ==========
     report = generate_elastic_net_report(
         display_name,
         model_results,

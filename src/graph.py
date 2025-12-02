@@ -1039,8 +1039,9 @@ def graph_model(
         actual_mean,
         pred_mean,
         is_best,
-        model_type=model_type,  # ✅ Add parameter
+        model_type=model_type,
         is_log_target=is_log_target,
+        model_results=model_results,  # Pass full model_results for naive_baseline
     )
 
     report_file = get_report_path(results_name, model_number, is_best)
@@ -1081,6 +1082,7 @@ def generate_text_report(
     is_best=False,
     model_type="poisson",
     is_log_target=False,
+    model_results=None,  # Add this to access naive_baseline
 ):
     """Generate detailed text report"""
     best_marker = "⭐ BEST MODEL ⭐" if is_best else ""
@@ -1119,7 +1121,36 @@ TEST SET RESULTS:
   • F1 Score:         {results['test_f1']:.4f}
   • ROC-AUC:          {results['test_roc_auc']:.4f}
   • Log Loss:         {results['test_log_loss']:.4f}
-
+"""
+        
+        # Add naive baseline if available
+        if 'naive_baseline' in model_results and model_results['naive_baseline'] is not None:
+            nb = model_results['naive_baseline']
+            
+            # Calculate improvements
+            accuracy_improvement = ((results['test_accuracy'] - nb['accuracy']) / nb['accuracy'] * 100) if nb['accuracy'] > 0 else 0.0
+            roc_auc_improvement = ((results['test_roc_auc'] - nb['roc_auc']) / nb['roc_auc'] * 100) if nb['roc_auc'] > 0 else 0.0
+            
+            # F1 improvement (handle division by zero)
+            if nb['f1'] > 0:
+                f1_improvement_str = f"{((results['test_f1'] - nb['f1']) / nb['f1'] * 100):+.2f}%"
+            else:
+                f1_improvement_str = "N/A"
+            
+            report += f"""
+NAIVE BASELINE (Majority Class Predictor):
+  • Strategy: Always predict class {nb['majority_class']} (most common class)
+  • Accuracy:         {nb['accuracy']:.4f}
+  • F1 Score:         {nb['f1']:.4f}
+  • ROC-AUC:          {nb['roc_auc']:.4f}
+  
+  Model Improvement over Baseline:
+  • Accuracy:         {accuracy_improvement:+.2f}%
+  • F1 Score:         {f1_improvement_str}
+  • ROC-AUC:          {roc_auc_improvement:+.2f}%
+"""
+        
+        report += f"""
 GENERALIZATION (Test/CV ratio):
   • Accuracy:         {results['test_accuracy'] / results['val_accuracy']:.4f}
   • ROC-AUC:          {results['test_roc_auc'] / results['val_roc_auc']:.4f}

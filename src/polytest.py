@@ -320,8 +320,29 @@ print("=" * 70)
 poly_degrees = [1, 2, 3, 4]
 poly_errors = []
 poly_rmse_errors = []
-predictors = ["surface_type", "Avg_Temp", "day", "week", "season", "stadium",
-              "surface", "dome", "num_plays", "yds_w", "yds_l", "tov_w", "tov_l"]  # model 3
+
+# Model 6: Kitchen sink (all potentially relevant features)
+predictors = [
+    "surface_type",
+    "Avg_Temp",
+    "Avg_Wind_MPH",
+    "Avg_Humidity_Percent",
+    "Avg_Percipitation_Prob_Percent",
+    "day",
+    "week",
+    "season",
+    "stadium",
+    "surface",
+    "dome",
+    "num_plays",
+    "yds_w",
+    "yds_l",
+    "tov_w",
+    "tov_l",
+    "HOME_day_since_last_game",
+    "AWAY_day_since_last_game",
+    "distance_miles",
+]
 
 # Split numeric and categorical predictors (using training data for consistency)
 num_cols = train_df[predictors].select_dtypes(include=np.number).columns.tolist()
@@ -353,7 +374,7 @@ for i, degree in enumerate(poly_degrees, 1):
         preprocessor = ColumnTransformer(
             transformers=[
                 ('num', numeric_transformer, num_cols),
-                ('cat', OneHotEncoder(handle_unknown='ignore', drop='first'), cat_cols)
+                ('cat', OneHotEncoder(handle_unknown='ignore'), cat_cols)
             ]
         )
     else:

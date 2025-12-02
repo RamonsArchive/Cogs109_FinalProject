@@ -1,0 +1,48 @@
+
+======================================================================
+
+MODEL REPORT: backward_selected (Model 7)
+MODEL TYPE: POISSON
+======================================================================
+Timestamp: 2025-12-02 15:42:35
+
+PREDICTORS (2):
+Avg_Humidity_Percent, week
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              4.0278
+  • RMSE:             2.0069
+  • MAE:              1.5890
+
+TEST SET RESULTS:
+  • MSE:              4.4429
+  • RMSE:             2.1078
+  • MAE:              1.6306
+  • R²:                0.0068
+  • Adjusted R²:       -0.0023
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              1.1031
+  • MAE:              1.0262
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.0068
+  • Adjusted R²:       -0.0023
+  • Mean Actual:      2.90
+  • Mean Predicted:   3.01
+  • Actual Range:     10.00
+  • Predicted Range:  0.69
+
+MODEL INTERPRETATION:
+  • R² = 0.7% means the model explains 0.7% of variance
+  • Adjusted R² = -0.2% accounts for model complexity
+  • Predictions range from 2.71 to 3.41
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Very low R² (0.0068)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+======================================================================

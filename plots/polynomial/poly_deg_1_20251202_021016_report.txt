@@ -1,0 +1,47 @@
+
+======================================================================
+
+MODEL REPORT: Polynomial Degree 1
+MODEL TYPE: LINEAR
+======================================================================
+Timestamp: 2025-12-02 02:10:16
+
+PREDICTORS (19):
+surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome, num_plays, yds_w, yds_l, tov_w, tov_l, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
+
+  • Polynomial Degree: 1
+  • Actual Features After Transformation: 90
+  • Polynomial applied to numeric predictors only
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              3.8830
+  • RMSE:             1.9705
+  • MAE:              1.5269
+
+TEST SET RESULTS:
+  • MSE:              3.7717
+  • RMSE:             1.9421
+  • MAE:              1.4760
+  • R²:                0.1568
+  • Adjusted R²:       -0.4269 (using 90 features after polynomial transformation)
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              0.9714
+  • MAE:              0.9666
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.1568
+  • Adjusted R²:       -0.4269 (using 90 features after polynomial transformation)
+  • Mean Actual:      2.90
+  • Mean Predicted:   2.97
+  • Actual Range:     10.00
+  • Predicted Range:  5.25
+
+MODEL INTERPRETATION:
+  • R² = 15.7% means the model explains 15.7% of variance
+  • Adjusted R² = -42.7% accounts for model complexity (using 90 features)
+  • Predictions range from -0.56 to 4.70
+  • Actual values range from 0.00 to 10.00
+
+======================================================================
