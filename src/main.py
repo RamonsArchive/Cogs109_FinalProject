@@ -140,19 +140,48 @@ def main():
     df = clean_data(df)
 
     target_column = "num_injuries"
+    
+    # ========================================================================
+    # STEP 1: ONE SPLIT - Create held-out test set (NEVER touch until end)
+    # ========================================================================
+    print("\n" + "=" * 70)
+    print("STEP 1: DATA SPLITTING")
+    print("=" * 70)
+    from sklearn.model_selection import train_test_split
+    from model import RANDOM_STATE
+    train_df, test_df = train_test_split(df, test_size=0.2, random_state=RANDOM_STATE)
+    print(f"📊 Outer split: Train={len(train_df)} ({len(train_df)/len(df)*100:.1f}%), Test={len(test_df)} ({len(test_df)/len(df)*100:.1f}%)")
+    print("⚠️  Test set will NOT be used for model training or selection!")
+    print("⚠️  Test set will ONLY be used for final unbiased evaluation")
+    print("=" * 70)
+
+    # Create transformed datasets from the training split only
+    log_train_df = log_transform_data(train_df, target_column)
+    log_test_df = log_transform_data(test_df, target_column)
+    
+    # For full dataset operations (like correlation analysis), use full df
     log_df = log_transform_data(df, target_column)
 
     # Create binary target for logistic regression (1 if num_injuries > 4, else 0)
+    binary_train_df = train_df.copy()
+    binary_train_df[target_column] = (train_df[target_column] > 4).astype(int)
+    binary_test_df = test_df.copy()
+    binary_test_df[target_column] = (test_df[target_column] > 4).astype(int)
+    
+    # For full dataset operations
     binary_df = df.copy()
     binary_df[target_column] = (df[target_column] > 4).astype(int)
+    
     print(f"\n✅ Created binary target: 1 if num_injuries > 4, else 0")
-    print(f"   Class distribution: {np.bincount(binary_df[target_column])}")
+    print(f"   Class distribution (full): {np.bincount(binary_df[target_column])}")
+    print(f"   Class distribution (train): {np.bincount(binary_train_df[target_column])}")
+    print(f"   Class distribution (test): {np.bincount(binary_test_df[target_column])}")
 
     # Perform exploratory data analysis
     # exploratory_data_analysis(df, log_df, target_column)
 
-    # Perform correlation analysis
-    corr_original, corr_log = correlation_analysis(df, log_df, target_column)
+    # Perform correlation analysis (on full dataset for exploration)
+    # corr_original, corr_log = correlation_analysis(df, log_df, target_column)
 
     # ========================================================================
     # BACKWARD SELECTION - Find optimal features from Model 6 (kitchen sink)
@@ -167,8 +196,9 @@ def main():
     print(f"Starting with {len(REGRESSION_PREDICTORS[5])} predictors from Model 6")
     print("=" * 70 + "\n")
 
+    # Backward selection uses training data only (no data leakage)
     selected_features = backward_selection(
-        df=binary_df,
+        df=binary_train_df,  # Use training data only
         predictors=REGRESSION_PREDICTORS[5],  # Model 6: kitchen_sink_all
         target_column=target_column,
         significance_level=0.1, # Adjusted R² = 26.5% 
@@ -177,9 +207,9 @@ def main():
         verbose=True,
     )
 
-    # Compare models with/without feature selection
+    # Compare models with/without feature selection (on training data only)
     compare_models_with_without_selection(
-        df=binary_df,
+        df=binary_train_df,  # Use training data only
         all_predictors=REGRESSION_PREDICTORS[5],
         selected_predictors=selected_features,
         target_column=target_column,
@@ -224,12 +254,15 @@ def main():
         zip(model_names, REGRESSION_PREDICTORS), 1
     ):
         result_model = train_model(
-            df,
-            predictors,
-            poisson_results,
-            model_name,
+            df=train_df,  # Pass training df (for feature type detection)
+            predictors=predictors,
+            results=poisson_results,
+            model_name=model_name,
             model_type="poisson",
             is_log_target=False,
+            is_binary=False,
+            train_df=train_df,  # Pre-split training data
+            test_df=test_df,    # Pre-split test data
         )
         poisson_errors.append(result_model["10foldCV"]["val_primary_metric"])
         graph_model(result_model, model_name, model_number=i)
@@ -245,13 +278,15 @@ def main():
         zip(logistic_model_names, REGRESSION_PREDICTORS), 1
     ):
         result_model = train_model(
-            binary_df,
-            predictors,
-            logistic_results,
-            logistic_model_name,
+            df=binary_train_df,  # Pass training df (for feature type detection)
+            predictors=predictors,
+            results=logistic_results,
+            model_name=logistic_model_name,
             model_type="logistic",
             is_log_target=False,
             is_binary=True,
+            train_df=binary_train_df,  # Pre-split training data
+            test_df=binary_test_df,    # Pre-split test data
         )
         logistic_errors.append(result_model["10foldCV"]["val_primary_metric"])
         graph_model(result_model, logistic_model_name, model_number=i)
@@ -267,45 +302,54 @@ def main():
         zip(log_model_names, REGRESSION_PREDICTORS), 1
     ):
         result_model = train_model(
-            log_df,
-            predictors,
-            linear_results,
-            log_model_name,
+            df=log_train_df,  # Pass training df (for feature type detection)
+            predictors=predictors,
+            results=linear_results,
+            model_name=log_model_name,
             model_type="linear",
             is_log_target=True,
+            is_binary=False,
+            train_df=log_train_df,  # Pre-split training data
+            test_df=log_test_df,    # Pre-split test data
         )
         linear_errors.append(result_model["10foldCV"]["val_primary_metric"])
         graph_model(result_model, log_model_name, model_number=i)
 
-    # Select best from each approach
+    # Select best from each approach (using pre-split data)
     best_poisson = use_best_model(
-        poisson_results,
-        df,
-        poisson_errors,
-        REGRESSION_PREDICTORS,
+        results=poisson_results,
+        df=train_df,  # Pass training data (for feature type detection)
+        err_k10=poisson_errors,
+        predictors=REGRESSION_PREDICTORS,
         model_type="poisson",
         is_log_target=False,
         is_binary=False,
+        train_df=train_df,  # Pre-split training data
+        test_df=test_df,    # Pre-split test data
     )
 
     best_logistic = use_best_model(
-        logistic_results,
-        binary_df,
-        logistic_errors,
-        REGRESSION_PREDICTORS,
+        results=logistic_results,
+        df=binary_train_df,  # Pass training data (for feature type detection)
+        err_k10=logistic_errors,
+        predictors=REGRESSION_PREDICTORS,
         model_type="logistic",
         is_log_target=False,
         is_binary=True,
+        train_df=binary_train_df,  # Pre-split training data
+        test_df=binary_test_df,    # Pre-split test data
     )
 
     best_linear = use_best_model(
-        linear_results,
-        log_df,
-        linear_errors,
-        REGRESSION_PREDICTORS,
+        results=linear_results,
+        df=log_train_df,  # Pass training data (for feature type detection)
+        err_k10=linear_errors,
+        predictors=REGRESSION_PREDICTORS,
         model_type="linear",
         is_log_target=True,
         is_binary=False,
+        train_df=log_train_df,  # Pre-split training data
+        test_df=log_test_df,    # Pre-split test data
     )
 
     # Get the best model names

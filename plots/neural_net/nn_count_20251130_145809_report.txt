@@ -7,44 +7,44 @@ MODEL TYPE: Neural Network (Count Data)
 Timestamp: 2025-11-30 14:58:09
 
 HYPERPARAMETERS:
-  • Architecture (hidden_layer_sizes): (100,)
-  • Learning rate (learning_rate_init): 0.0001
-  • Alpha (L2 regularization): 0.0001
-  • Batch size: auto
-  • Activation: relu
-  • Solver: adam
-  • Iterations completed: 321
-  • Total parameters: 8,601
+  ï¿½ Architecture (hidden_layer_sizes): (100,)
+  ï¿½ Learning rate (learning_rate_init): 0.0001
+  ï¿½ Alpha (L2 regularization): 0.0001
+  ï¿½ Batch size: auto
+  ï¿½ Activation: relu
+  ï¿½ Solver: adam
+  ï¿½ Iterations completed: 321
+  ï¿½ Total parameters: 8,601
 
 CROSS-VALIDATION RESULTS (10-fold):
-  • Training R²:       0.3338
-  • Validation R²:    0.0415
-  • Training RMSE:    1.6469
-  • Validation RMSE:  1.9676
-  • Training MSE:     2.7124
-  • Validation MSE:   3.8714
+  ï¿½ Training Rï¿½:       0.3338
+  ï¿½ Validation Rï¿½:    0.0415
+  ï¿½ Training RMSE:    1.6469
+  ï¿½ Validation RMSE:  1.9676
+  ï¿½ Training MSE:     2.7124
+  ï¿½ Validation MSE:   3.8714
 
 TEST SET RESULTS:
-  • R²:                0.1409
-  • MSE:               3.8428
-  • RMSE:              1.9603
-  • MAE:               1.5452
+  ï¿½ Rï¿½:                0.1409
+  ï¿½ MSE:               3.8428
+  ï¿½ RMSE:              1.9603
+  ï¿½ MAE:               1.5452
 
 GENERALIZATION (Test/CV ratio):
-  • MSE:               0.9926
-  • MAE:               0.9843
+  ï¿½ MSE:               0.9926
+  ï¿½ MAE:               0.9843
   
   Note: Ratio > 1.1 suggests overfitting
 
 ADDITIONAL METRICS:
-  • Mean Actual:       2.90
-  • Mean Predicted:    2.96
-  • Actual Range:      10.00
-  • Predicted Range:   3.50
+  ï¿½ Mean Actual:       2.90
+  ï¿½ Mean Predicted:    2.96
+  ï¿½ Actual Range:      10.00
+  ï¿½ Predicted Range:   3.50
 
 MODEL INTERPRETATION:
-  • R² = 14.1% means the model explains 14.1% of variance
-  • Predictions range from 0.91 to 4.41
-  • Actual values range from 0.00 to 10.00
+  ï¿½ Rï¿½ = 14.1% means the model explains 14.1% of variance
+  ï¿½ Predictions range from 0.91 to 4.41
+  ï¿½ Actual values range from 0.00 to 10.00
 
 ======================================================================

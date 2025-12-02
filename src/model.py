@@ -86,19 +86,42 @@ def train_model(
     model_type="poisson",
     is_log_target=False,
     is_binary=False,
+    train_df: pd.DataFrame = None,
+    test_df: pd.DataFrame = None,
 ):
     """Train a single model with 10-fold CV
 
     Args:
+        df: Full DataFrame (used if train_df/test_df not provided)
+        predictors: List of predictor column names
+        results: Dictionary to store results
+        model_name: Name for this model
         model_type: 'poisson', 'linear', 'ridge', or 'logistic'
         is_log_target: True if target is log-transformed
         is_binary: True if target is binary (for logistic regression)
+        train_df: Optional pre-split training DataFrame (80% of data)
+        test_df: Optional pre-split test DataFrame (20% of data)
+        
+    IMPORTANT: If train_df and test_df are provided, they will be used directly.
+    This prevents data leakage by ensuring all models use the same split.
+    If not provided, data will be split inside this function (legacy behavior).
     """
     outcomes = ["num_injuries"]
     target = outcomes[0]
 
-    num_cols_all = [c for c in predictors if pd.api.types.is_numeric_dtype(df[c])]
-    cat_cols_all = [c for c in predictors if not pd.api.types.is_numeric_dtype(df[c])]
+    # Handle data splitting
+    if train_df is not None and test_df is not None:
+        # Use pre-split data (prevents data leakage)
+        print(f"⚠️  Using pre-split data: Train={len(train_df)}, Test={len(test_df)}")
+        use_pre_split = True
+    else:
+        # Legacy behavior: split inside function
+        print(f"⚠️  Splitting data inside function (legacy mode)")
+        train_df, test_df = train_test_split(df, test_size=0.2, random_state=RANDOM_STATE)
+        use_pre_split = False
+
+    num_cols_all = [c for c in predictors if pd.api.types.is_numeric_dtype(train_df[c])]
+    cat_cols_all = [c for c in predictors if not pd.api.types.is_numeric_dtype(train_df[c])]
 
     print(f"\n{'='*70}")
     data_type = (
@@ -106,11 +129,14 @@ def train_model(
     )
     print(f"Training {model_name} ({model_type.upper()} on {data_type} data)")
     print(f"{'='*70}")
-    print("Data shape:", df.shape)
+    if use_pre_split:
+        print(f"Training set: {len(train_df)} samples (80%)")
+        print(f"Test set: {len(test_df)} samples (20%) - UNBIASED evaluation")
+    else:
+        print("Data shape:", df.shape)
     print("Number of numeric columns:", len(num_cols_all))
     print("Number of categorical columns:", len(cat_cols_all))
 
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=RANDOM_STATE)
     X_train = train_df[predictors]
     y_train = train_df[target]  # Keep as float if log-transformed
     X_test = test_df[predictors]
@@ -268,8 +294,43 @@ def train_model(
         print(f"RMSE: {original_rmse:.4f}")
         print(f"MAE : {original_mae:.4f}")
 
+    # Extract coefficients and feature names (for linear models only)
+    coefficients = None
+    feature_names = None
+    if model_type in ["linear", "ridge"]:
+        try:
+            # Fit pipeline first to ensure preprocessor is fitted
+            # (We already fit it above, but this ensures it's available)
+            model = pipeline.named_steps["model"]
+            if hasattr(model, "coef_"):
+                coefficients = model.coef_
+                
+                # Get feature names after preprocessing
+                preprocessor = pipeline.named_steps["preprocessor"]
+                feature_names = []
+                feature_names.extend(num_cols_all)
+                
+                if cat_cols_all:
+                    cat_encoder = preprocessor.named_transformers_["cat"]
+                    for i, col in enumerate(cat_cols_all):
+                        categories = cat_encoder.categories_[i]
+                        feature_names.extend([f"{col}_{cat}" for cat in categories])
+                
+                # Ensure lengths match
+                if len(coefficients) != len(feature_names):
+                    print(f"⚠️  Coefficient length ({len(coefficients)}) != feature name length ({len(feature_names)})")
+                    # Try to match by taking first len(coefficients) features
+                    feature_names = feature_names[:len(coefficients)]
+        except Exception as e:
+            print(f"⚠️  Could not extract coefficients: {e}")
+            coefficients = None
+            feature_names = None
+
     # Store results
     if model_type == "logistic":
+        # Combine train_df and test_df for full dataset (for plotting)
+        full_df = pd.concat([train_df, test_df], ignore_index=True) if use_pre_split else df
+        
         results[model_name] = {
             "10foldCV": {
                 "val_primary_metric": primary_metric,  # Negative ROC-AUC for argmin
@@ -289,11 +350,14 @@ def train_model(
             "y_test": y_test,
             "y_pred": y_pred,
             "y_pred_proba": y_pred_proba,
-            "df": df,
+            "df": full_df,
             "predictors": predictors,
             "model_type": model_type,
             "is_log_target": is_log_target,
             "is_binary": is_binary,
+            "pipeline": pipeline,
+            "coefficients": coefficients,
+            "feature_names": feature_names,
         }
     else:
         cv_dict = {
@@ -309,15 +373,21 @@ def train_model(
             cv_dict["val_mae_original"] = cv_mae_original
             cv_dict["val_rmse_original"] = cv_rmse_original
         
+        # Combine train_df and test_df for full dataset (for plotting)
+        full_df = pd.concat([train_df, test_df], ignore_index=True) if use_pre_split else df
+        
         results[model_name] = {
             "10foldCV": cv_dict,
             "y_test": y_test,
             "y_pred": y_pred,
-            "df": df,
+            "df": full_df,
             "predictors": predictors,
             "model_type": model_type,
             "is_log_target": is_log_target,
             "is_binary": is_binary,
+            "pipeline": pipeline,
+            "coefficients": coefficients,
+            "feature_names": feature_names,
         }
 
     return results[model_name]
@@ -331,8 +401,25 @@ def use_best_model(
     model_type="poisson",
     is_log_target=False,
     is_binary=False,
+    train_df: pd.DataFrame = None,
+    test_df: pd.DataFrame = None,
 ):
-    """Select best model based on CV error and retrain on full 80/20 split"""
+    """Select best model based on CV error and retrain on full 80/20 split
+    
+    Args:
+        results: Dictionary of model results
+        df: Full DataFrame (used if train_df/test_df not provided)
+        err_k10: List of CV errors for each model
+        predictors: List of predictor lists for each model
+        model_type: Type of model
+        is_log_target: True if target is log-transformed
+        is_binary: True if target is binary
+        train_df: Optional pre-split training DataFrame (80% of data)
+        test_df: Optional pre-split test DataFrame (20% of data)
+        
+    IMPORTANT: If train_df and test_df are provided, they will be used directly.
+    This prevents data leakage by ensuring the best model uses the same split.
+    """
     best_model_idx = np.argmin(err_k10)
     best_predictors = predictors[best_model_idx]
 
@@ -355,10 +442,16 @@ def use_best_model(
     outcomes = ["num_injuries"]
     target = outcomes[0]
 
-    num_cols = [c for c in best_predictors if pd.api.types.is_numeric_dtype(df[c])]
-    cat_cols = [c for c in best_predictors if not pd.api.types.is_numeric_dtype(df[c])]
+    # Handle data splitting
+    if train_df is not None and test_df is not None:
+        # Use pre-split data (prevents data leakage)
+        print(f"⚠️  Using pre-split data: Train={len(train_df)}, Test={len(test_df)}")
+    else:
+        # Legacy behavior: split inside function
+        train_df, test_df = train_test_split(df, test_size=0.2, random_state=RANDOM_STATE)
 
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=RANDOM_STATE)
+    num_cols = [c for c in best_predictors if pd.api.types.is_numeric_dtype(train_df[c])]
+    cat_cols = [c for c in best_predictors if not pd.api.types.is_numeric_dtype(train_df[c])]
     X_train = train_df[best_predictors]
     y_train = train_df[target]
     X_test = test_df[best_predictors]
@@ -403,18 +496,46 @@ def use_best_model(
         print(f"\n[FINAL TEST] RMSE: {np.sqrt(test_mse):.4f}   (MSE: {test_mse:.4f})")
         print(f"[FINAL TEST] MAE : {test_mae:.4f}")
 
+    # Extract coefficients and feature names (for linear models only)
+    coefficients = None
+    feature_names = None
+    if model_type in ["linear", "ridge"]:
+        try:
+            if hasattr(pipeline.named_steps["model"], "coef_"):
+                coefficients = pipeline.named_steps["model"].coef_
+                
+                # Get feature names after preprocessing
+                preprocessor = pipeline.named_steps["preprocessor"]
+                feature_names = []
+                feature_names.extend(num_cols)
+                
+                if cat_cols:
+                    cat_encoder = preprocessor.named_transformers_["cat"]
+                    for i, col in enumerate(cat_cols):
+                        categories = cat_encoder.categories_[i]
+                        feature_names.extend([f"{col}_{cat}" for cat in categories])
+        except Exception as e:
+            print(f"⚠️  Could not extract coefficients: {e}")
+            coefficients = None
+            feature_names = None
+    
+    # Combine train_df and test_df for full dataset (for plotting)
+    full_df = pd.concat([train_df, test_df], ignore_index=True)
+
     best_model_results = {
         "10foldCV": original_cv_results,
         "y_test": y_test,
         "y_pred": y_pred,
         "y_pred_proba": y_pred_proba,
-        "df": df,
+        "df": full_df,
         "predictors": best_predictors,
         "pipeline": pipeline,
         "best_model_idx": best_model_idx,
         "model_type": model_type,
         "is_log_target": is_log_target,
         "is_binary": is_binary,
+        "coefficients": coefficients,
+        "feature_names": feature_names,
     }
 
     return best_model_results

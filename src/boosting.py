@@ -461,19 +461,6 @@ def main():
         max_depth_grid=MAX_DEPTH_GRID,
     )
     
-    # Tune hyperparameters for LOG model (on training data only)
-    print("\n" + "=" * 70)
-    print("LOG-TRANSFORMED MODEL: Hyperparameter Tuning")
-    print("=" * 70)
-    log_tuning = tune_boosting_hyperparameters(
-        train_df=train_df,  # ← Only the 80% training data
-        predictors=PREDICTORS,
-        is_log_target=True,
-        n_estimators_grid=N_ESTIMATORS_GRID,
-        learning_rate_grid=LEARNING_RATE_GRID,
-        max_depth_grid=MAX_DEPTH_GRID,
-    )
-    
     # ========================================================================
     # STEP 3: TRAIN FINAL MODELS WITH BEST HYPERPARAMETERS
     # Retrain on FULL training set, evaluate on held-out test set
@@ -513,34 +500,6 @@ def main():
     graph_boosting_model(count_model, "boosting_count", is_best=False)
 
     # ========================================================================
-    # GRADIENT BOOSTING ON LOG-TRANSFORMED DATA (Final Model)
-    # ========================================================================
-    print("\n" + "=" * 70)
-    print("FINAL LOG-TRANSFORMED MODEL")
-    print("=" * 70)
-    print(f"Best hyperparameters from grid search:")
-    print(f"  • n_estimators: {log_tuning['best_n_estimators']}")
-    print(f"  • learning_rate: {log_tuning['best_learning_rate']}")
-    print(f"  • max_depth: {log_tuning['best_max_depth']}")
-    print(f"  • Best CV RMSE: {log_tuning['best_cv_rmse']:.4f}")
-    
-    log_results = {}
-    
-    log_model = train_final_model(
-        train_df=train_df,  # ← Full 80% for training
-        test_df=test_df,    # ← Held-out 20% for final evaluation
-        predictors=PREDICTORS,
-        results=log_results,
-        model_name="boosting_log",
-        is_log_target=True,
-        n_estimators=log_tuning['best_n_estimators'],
-        learning_rate=log_tuning['best_learning_rate'],
-        max_depth=log_tuning['best_max_depth'],
-    )
-    
-    graph_boosting_model(log_model, "boosting_log", is_best=False)
-
-    # ========================================================================
     # SUMMARY
     # ========================================================================
     print("\n" + "=" * 70)
@@ -561,17 +520,6 @@ def main():
     print(f"   • Test R²: {count_model['10foldCV']['test_r2']:.4f}")
     print(f"   • CV RMSE: {np.sqrt(count_model['10foldCV']['val_mse']):.4f}")
     print(f"   • Test RMSE: {np.sqrt(count_model['10foldCV']['test_mse']):.4f}")
-    
-    print(f"\n🎯 LOG-TRANSFORMED MODEL - Best Hyperparameters (from grid search):")
-    print(f"   • n_estimators: {log_tuning['best_n_estimators']}")
-    print(f"   • learning_rate: {log_tuning['best_learning_rate']}")
-    print(f"   • max_depth: {log_tuning['best_max_depth']}")
-    print(f"   • Grid Search Best CV RMSE: {log_tuning['best_cv_rmse']:.4f}")
-    print(f"\n   Final Model Performance:")
-    print(f"   • CV R²: {log_model['10foldCV']['val_r2']:.4f}")
-    print(f"   • Test R²: {log_model['10foldCV']['test_r2']:.4f}")
-    print(f"   • CV RMSE: {np.sqrt(log_model['10foldCV']['val_mse']):.4f}")
-    print(f"   • Test RMSE: {np.sqrt(log_model['10foldCV']['test_mse']):.4f}")
     
     print(f"\n📁 All plots saved to: plots/boosting/")
     print("=" * 70 + "\n")

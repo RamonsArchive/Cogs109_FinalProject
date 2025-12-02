@@ -655,8 +655,54 @@ def graph_model(
         print(f"✓ Saved: {filename3}")
         plt.close()
 
-        # ========== 4. PREDICTION ERROR BY ACTUAL COUNT ==========
-        fig4, ax = plt.subplots(figsize=(12, 7))
+        # ========== 4. FEATURE COEFFICIENTS (for linear/ridge models) ==========
+        coefficients = model_results.get("coefficients", None)
+        feature_names = model_results.get("feature_names", None)
+        
+        if coefficients is not None and feature_names is not None and len(coefficients) > 0:
+            # Get top 20 features by absolute coefficient value
+            coef_df = pd.DataFrame({
+                "feature": feature_names,
+                "coefficient": coefficients
+            })
+            coef_df["abs_coef"] = np.abs(coef_df["coefficient"])
+            coef_df = coef_df.sort_values("abs_coef", ascending=False).head(20)
+            
+            fig4, ax = plt.subplots(figsize=(12, 8))
+            
+            colors = ["#e74c3c" if c < 0 else "#3498db" for c in coef_df["coefficient"]]
+            bars = ax.barh(
+                range(len(coef_df)), coef_df["coefficient"],
+                color=colors, alpha=0.7, edgecolor="black"
+            )
+            
+            ax.set_yticks(range(len(coef_df)))
+            ax.set_yticklabels(coef_df["feature"], fontsize=9)
+            ax.set_xlabel("Coefficient Value", fontsize=12)
+            ax.set_title(
+                f"{title_prefix}Top 20 Feature Coefficients: {display_name}",
+                fontsize=14, fontweight="bold"
+            )
+            ax.axvline(x=0, color="black", linestyle="--", lw=1)
+            ax.grid(True, alpha=0.3, axis="x")
+            
+            # Add value labels
+            for i, (bar, val) in enumerate(zip(bars, coef_df["coefficient"])):
+                width = bar.get_width()
+                ax.text(
+                    width, i, f"{val:.3f}",
+                    ha="left" if width < 0 else "right",
+                    va="center", fontsize=8
+                )
+            
+            plt.tight_layout()
+            filename4_coef = get_plot_path(results_name, model_number, is_best, "coefficients")
+            plt.savefig(filename4_coef, dpi=300, bbox_inches="tight")
+            print(f"✓ Saved: {filename4_coef}")
+            plt.close()
+
+        # ========== 5. PREDICTION ERROR BY ACTUAL COUNT ==========
+        fig5, ax = plt.subplots(figsize=(12, 7))
 
         error_by_actual = {}
         for actual in np.unique(y_test):
@@ -699,12 +745,12 @@ def graph_model(
 
         plt.tight_layout()
 
-        filename4 = get_plot_path(results_name, model_number, is_best, "error_by_count")
-        plt.savefig(filename4, dpi=300, bbox_inches="tight")
-        print(f"✓ Saved: {filename4}")
+        filename5 = get_plot_path(results_name, model_number, is_best, "error_by_count")
+        plt.savefig(filename5, dpi=300, bbox_inches="tight")
+        print(f"✓ Saved: {filename5}")
         plt.close()
 
-    # ========== 5. CLASSIFICATION METRICS (if requested) ==========
+    # ========== 6. CLASSIFICATION METRICS (if requested) ==========
 
     if add_classification_metrics:
         print(
