@@ -22,7 +22,6 @@ CROSS-VALIDATION RESULTS (10-fold):
 
 TEST SET RESULTS:
   • R²:                0.1383
-  • Adjusted R²:       0.0569
   • MSE:               3.8546
   • RMSE:              1.9633
   • MAE:               1.5149

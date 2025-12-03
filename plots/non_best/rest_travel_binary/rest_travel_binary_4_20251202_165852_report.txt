@@ -1,0 +1,46 @@
+
+======================================================================
+
+MODEL REPORT: rest_travel_binary (Model 4)
+MODEL TYPE: LOGISTIC
+======================================================================
+Timestamp: 2025-12-02 16:58:52
+
+PREDICTORS (11):
+surface_type, Avg_Temp, day, week, season, stadium, surface, dome, HOME_day_since_last_game, AWAY_day_since_last_game, distance_miles
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Accuracy:         0.5464
+  • Precision:        0.2382
+  • Recall:           0.4766
+  • F1 Score:         0.3137
+  • ROC-AUC:          0.5473
+  • Log Loss:         0.6921
+
+TEST SET RESULTS:
+  • Accuracy:         0.3982
+  • Precision:        0.2051
+  • Recall:           0.7805
+  • F1 Score:         0.3249
+  • ROC-AUC:          0.5774
+  • Log Loss:         0.6905
+
+NAIVE BASELINE (Majority Class Predictor):
+  • Strategy: Always predict class 0 (most common class)
+  • Accuracy:         0.8145
+  • F1 Score:         0.0000
+  • ROC-AUC:          0.5000
+  
+  Model Improvement over Baseline:
+  • Accuracy:         -51.11%
+  • F1 Score:         N/A
+  • ROC-AUC:          +15.47%
+
+GENERALIZATION (Test/CV ratio):
+  • Accuracy:         0.7288
+  • ROC-AUC:          1.0549
+  • F1 Score:         1.0357
+  
+  Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
+
+======================================================================

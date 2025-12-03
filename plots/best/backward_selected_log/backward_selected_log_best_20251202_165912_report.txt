@@ -1,0 +1,64 @@
+
+======================================================================
+⭐ BEST MODEL ⭐
+MODEL REPORT: backward_selected_log (BEST MODEL)
+MODEL TYPE: LINEAR (Log-Transformed Target)
+======================================================================
+Timestamp: 2025-12-02 16:59:12
+
+PREDICTORS (2):
+Avg_Humidity_Percent, week
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • MSE:              0.2717
+  • RMSE:             0.5213
+  • MAE:              0.4015
+
+CROSS-VALIDATION RESULTS (10-fold) - ORIGINAL SCALE:
+  • MSE:              3.8977
+  • RMSE:             1.9743
+  • MAE:              1.4961
+
+TEST SET RESULTS:
+  • R²:                0.2172
+  • Adjusted R²:       0.2100
+  • MSE:              0.2855
+  • RMSE:             0.5343
+  • MAE:              0.3984
+
+GENERALIZATION (Test/CV ratio):
+  • MSE:              1.0508
+  • MAE:              0.9924
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+        ORIGINAL SCALE METRICS:
+        Mean: 2.53 injuries
+        MSE: 4.1939 injuries
+        RMSE: 2.0479 injuries
+        MAE: 1.4785 injuries
+        R²: 0.0625
+        Adjusted R²: 0.0539
+        Pred Range: [0.00, 3.94]
+        
+ADDITIONAL METRICS:
+  • R² Score:         0.2172
+  • Adjusted R²:       0.2100
+  • Mean Actual:      1.20
+  • Mean Predicted:   1.22
+  • Actual Range:     2.40
+  • Predicted Range:  1.66
+
+MODEL INTERPRETATION:
+  • R² = 21.7% means the model explains 21.7% of variance
+  • Adjusted R² = 21.0% accounts for model complexity
+  • Predictions range from -0.06 to 1.60
+  • Actual values range from 0.00 to 2.40
+
+======================================================================
+🎯 This is the BEST model based on 10-fold CV MSE
+   - Retrained on full 80/20 train/test split
+   - Use this model for final predictions
+======================================================================
+
+======================================================================

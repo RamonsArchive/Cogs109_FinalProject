@@ -1,0 +1,51 @@
+
+======================================================================
+
+MODEL REPORT: baseline (Model 1)
+MODEL TYPE: POISSON
+======================================================================
+Timestamp: 2025-12-02 16:54:09
+
+PREDICTORS (7):
+surface_type, day, week, season, stadium, surface, dome
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Poisson Deviance:  1.5110
+  • Pseudo-R²:         0.0152
+  • MSE:              4.0026
+  • RMSE:             2.0007
+  • MAE:              1.5883
+
+TEST SET RESULTS:
+  • Poisson Deviance:  1.6301
+  • Pseudo-R²:         0.2032
+  • MSE:              4.2873
+  • RMSE:             2.0706
+  • MAE:              1.6091
+
+GENERALIZATION (Test/CV ratio):
+  • Poisson Dev:      1.0788
+  • MSE:              1.0711
+  • MAE:              1.0131
+  
+  Note: Ratio > 1.1 suggests overfitting
+
+ADDITIONAL METRICS:
+  • R² Score:         0.0416
+  • Adjusted R²:       0.0101
+  • Mean Actual:      2.90
+  • Mean Predicted:   3.00
+  • Actual Range:     10.00
+  • Predicted Range:  0.91
+
+MODEL INTERPRETATION:
+  • R² = 4.2% means the model explains 4.2% of variance
+  • Adjusted R² = 1.0% accounts for model complexity
+  • Predictions range from 2.56 to 3.47
+  • Actual values range from 0.00 to 10.00
+
+⚠️  WARNING: Very low R² (0.0416)
+   - Model barely outperforms predicting the mean
+   - Consider: different features, non-linear models, or interaction terms
+
+======================================================================

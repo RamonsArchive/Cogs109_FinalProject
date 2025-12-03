@@ -1,10 +1,10 @@
 
 ======================================================================
-⭐ BEST MODEL ⭐
-MODEL REPORT: Avg_Temp_binary (BEST MODEL)
+
+MODEL REPORT: Avg_Temp_binary (Model 2)
 MODEL TYPE: LOGISTIC
 ======================================================================
-Timestamp: 2025-12-02 15:42:58
+Timestamp: 2025-12-02 16:58:50
 
 PREDICTORS (8):
 surface_type, Avg_Temp, day, week, season, stadium, surface, dome
@@ -42,11 +42,5 @@ GENERALIZATION (Test/CV ratio):
   • F1 Score:         1.0180
   
   Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
-
-======================================================================
-🎯 This is the BEST model based on 10-fold CV ROC-AUC
-   - Retrained on full 80/20 train/test split
-   - Use this model for final predictions
-======================================================================
 
 ======================================================================

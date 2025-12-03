@@ -31,6 +31,53 @@ RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
 
+def calculate_pseudo_r2_poisson(y_true, y_pred, y_mean=None):
+    """
+    Calculate McFadden's pseudo-R² for Poisson regression.
+    
+    Pseudo-R² = 1 - (deviance_model / deviance_null)
+    
+    Where:
+    - deviance_model: Deviance of the fitted model
+    - deviance_null: Deviance of null model (intercept only, predicts mean)
+    
+    Parameters:
+    -----------
+    y_true : array-like
+        True target values
+    y_pred : array-like
+        Predicted values from model
+    y_mean : float, optional
+        Mean of y_true (for null model). If None, calculated from y_true.
+    
+    Returns:
+    --------
+    pseudo_r2 : float
+        McFadden's pseudo-R² (0 to 1, higher is better)
+    """
+    from sklearn.metrics import mean_poisson_deviance
+    
+    # Clip predictions to avoid log(0)
+    y_pred = np.clip(y_pred, 1e-9, None)
+    
+    # Calculate model deviance
+    model_deviance = mean_poisson_deviance(y_true, y_pred) * len(y_true)
+    
+    # Calculate null model deviance (intercept only - predicts mean)
+    if y_mean is None:
+        y_mean = np.mean(y_true)
+    y_null = np.full_like(y_true, y_mean)
+    y_null = np.clip(y_null, 1e-9, None)
+    null_deviance = mean_poisson_deviance(y_true, y_null) * len(y_true)
+    
+    # McFadden's pseudo-R²
+    if null_deviance == 0:
+        return np.nan
+    pseudo_r2 = 1 - (model_deviance / null_deviance)
+    
+    return max(0.0, min(1.0, pseudo_r2))  # Clamp between 0 and 1
+
+
 # NOTE: Negative Binomial Regression removed
 #
 # Reason: No robust sklearn-compatible implementation exists.
@@ -223,6 +270,14 @@ def train_model(
         if model_type == "poisson":
             mean_poisson_dev = -np.mean(cv_out["test_neg_poisson_dev"])
             print(f"[CV] Mean Poisson deviance: {mean_poisson_dev:.4f}")
+            
+            # Calculate pseudo-R² for CV (using mean of y_train as null model)
+            y_train_mean = np.mean(y_train)
+            y_cv_pred = cross_val_predict(pipeline, X_train, y_train, cv=cv)
+            y_cv_pred = np.clip(y_cv_pred, 1e-9, None)
+            mean_pseudo_r2 = calculate_pseudo_r2_poisson(y_train, y_cv_pred, y_train_mean)
+            print(f"[CV] Pseudo-R²: {mean_pseudo_r2:.4f}")
+            
             primary_metric = mean_poisson_dev
         else:
             mean_r2 = np.mean(cv_out["test_r2"])
@@ -291,6 +346,11 @@ def train_model(
                 y_test, np.clip(y_pred, 1e-9, None)
             )
             print(f"[Test] Poisson deviance: {test_poisson_dev:.4f}")
+            
+            # Calculate pseudo-R² for test set
+            y_test_mean = np.mean(y_test)
+            test_pseudo_r2 = calculate_pseudo_r2_poisson(y_test, y_pred, y_test_mean)
+            print(f"[Test] Pseudo-R²: {test_pseudo_r2:.4f}")
         else:
             from sklearn.metrics import r2_score
 
@@ -394,6 +454,16 @@ def train_model(
             "test_mse": test_mse,
             "test_mae": test_mae,
         }
+        # Add Poisson-specific metrics
+        if model_type == "poisson":
+            cv_dict["val_poisson_dev"] = mean_poisson_dev
+            cv_dict["test_poisson_dev"] = test_poisson_dev
+            cv_dict["val_pseudo_r2"] = mean_pseudo_r2
+            cv_dict["test_pseudo_r2"] = test_pseudo_r2
+        else:
+            cv_dict["val_r2"] = mean_r2
+            cv_dict["test_r2"] = test_r2
+        
         # Add original scale CV metrics for log-transformed models
         if is_log_target and cv_mse_original is not None:
             cv_dict["val_mse_original"] = cv_mse_original
@@ -541,7 +611,22 @@ def use_best_model(
         test_mse = mean_squared_error(y_test, y_pred)
         test_mae = mean_absolute_error(y_test, y_pred)
 
-        print(f"\n[FINAL TEST] RMSE: {np.sqrt(test_mse):.4f}   (MSE: {test_mse:.4f})")
+        if model_type == "poisson":
+            test_poisson_dev = mean_poisson_deviance(
+                y_test, np.clip(y_pred, 1e-9, None)
+            )
+            print(f"[FINAL TEST] Poisson deviance: {test_poisson_dev:.4f}")
+            
+            # Calculate pseudo-R² for test set
+            y_test_mean = np.mean(y_test)
+            test_pseudo_r2 = calculate_pseudo_r2_poisson(y_test, y_pred, y_test_mean)
+            print(f"[FINAL TEST] Pseudo-R²: {test_pseudo_r2:.4f}")
+        else:
+            from sklearn.metrics import r2_score
+            test_r2 = r2_score(y_test, y_pred)
+            print(f"[FINAL TEST] R²: {test_r2:.4f}")
+
+        print(f"[FINAL TEST] RMSE: {np.sqrt(test_mse):.4f}   (MSE: {test_mse:.4f})")
         print(f"[FINAL TEST] MAE : {test_mae:.4f}")
 
     # Extract coefficients and feature names (for linear models only)
@@ -593,8 +678,22 @@ def use_best_model(
             "majority_class": int(majority_class),
         }
 
+    # Update test metrics in CV results for best model
+    updated_cv_results = original_cv_results.copy()
+    
+    # Only update MSE/MAE for non-logistic models (not meaningful for classification)
+    if model_type != "logistic":
+        updated_cv_results["test_mse"] = test_mse
+        updated_cv_results["test_mae"] = test_mae
+        
+        if model_type == "poisson":
+            updated_cv_results["test_poisson_dev"] = test_poisson_dev
+            updated_cv_results["test_pseudo_r2"] = test_pseudo_r2
+        else:
+            updated_cv_results["test_r2"] = test_r2
+
     best_model_results = {
-        "10foldCV": original_cv_results,
+        "10foldCV": updated_cv_results,
         "y_test": y_test,
         "y_pred": y_pred,
         "y_pred_proba": y_pred_proba,

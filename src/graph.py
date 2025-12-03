@@ -257,8 +257,8 @@ def graph_model(
 
     # ✅ Adjust metrics based on model type
     if model_type == "poisson":
-        metrics = ["poisson_dev", "mse", "mae"]
-        titles = ["Poisson Deviance", "MSE", "MAE"]
+        metrics = ["poisson_dev", "pseudo_r2", "mse"]
+        titles = ["Poisson Deviance", "Pseudo-R²", "MSE"]
     elif model_type == "logistic":
         metrics = ["roc_auc", "accuracy", "f1"]
         titles = ["ROC-AUC", "Accuracy", "F1 Score"]
@@ -280,9 +280,14 @@ def graph_model(
             )
             ax.set_title(title, fontsize=13, fontweight="bold")
             continue
-
-        cv_val = results.get(f"val_{metric}", 0)
-        test_val = results.get(f"test_{metric}", 0)
+        
+        # ✅ Handle pseudo-R² for Poisson models
+        if metric == "pseudo_r2":
+            cv_val = results.get("val_pseudo_r2", 0)
+            test_val = results.get("test_pseudo_r2", 0)
+        else:
+            cv_val = results.get(f"val_{metric}", 0)
+            test_val = results.get(f"test_{metric}", 0)
 
         x = ["CV", "Test"]
         y = [cv_val, test_val]
@@ -1159,10 +1164,12 @@ GENERALIZATION (Test/CV ratio):
   Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
 """
     else:
-        # Add deviance for Poisson/Negative Binomial models
-        if model_type == "poisson" and "val_poisson_dev" in results:
-            dev_label = "Poisson Deviance"
-            report += f"  • {dev_label}: {results['val_poisson_dev']:.4f}\n"
+        # Add deviance and pseudo-R² for Poisson models
+        if model_type == "poisson":
+            if "val_poisson_dev" in results:
+                report += f"  • Poisson Deviance:  {results['val_poisson_dev']:.4f}\n"
+            if "val_pseudo_r2" in results:
+                report += f"  • Pseudo-R²:         {results['val_pseudo_r2']:.4f}\n"
 
         report += f"""  • MSE:              {results['val_mse']:.4f}
   • RMSE:             {np.sqrt(results['val_mse']):.4f}
@@ -1182,18 +1189,14 @@ CROSS-VALIDATION RESULTS (10-fold) - ORIGINAL SCALE:
 TEST SET RESULTS:
 """
 
-        # Add deviance for Poisson/Negative Binomial models
-        if model_type == "poisson" and "test_poisson_dev" in results:
-            dev_label = "Poisson Deviance"
-            report += f"  • {dev_label}: {results['test_poisson_dev']:.4f}\n"
-
-        report += f"""  • MSE:              {results['test_mse']:.4f}
-  • RMSE:             {np.sqrt(results['test_mse']):.4f}
-  • MAE:              {results['test_mae']:.4f}
-"""
-        
-        # Calculate and add R² and Adjusted R² for regression models (not logistic)
-        if model_type != "logistic":
+        # Add deviance and pseudo-R² for Poisson models
+        if model_type == "poisson":
+            if "test_poisson_dev" in results:
+                report += f"  • Poisson Deviance:  {results['test_poisson_dev']:.4f}\n"
+            if "test_pseudo_r2" in results:
+                report += f"  • Pseudo-R²:         {results['test_pseudo_r2']:.4f}\n"
+        else:
+            # Calculate and add R² and Adjusted R² for linear models
             r2 = r2_score(y_test, y_pred)
             n = len(y_test)
             p = len(predictors)
@@ -1201,6 +1204,11 @@ TEST SET RESULTS:
             report += f"  • R²:                {r2:.4f}\n"
             if not np.isnan(adj_r2):
                 report += f"  • Adjusted R²:       {adj_r2:.4f}\n"
+
+        report += f"""  • MSE:              {results['test_mse']:.4f}
+  • RMSE:             {np.sqrt(results['test_mse']):.4f}
+  • MAE:              {results['test_mae']:.4f}
+"""
         
         report += f"""
 GENERALIZATION (Test/CV ratio):

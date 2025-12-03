@@ -1,0 +1,46 @@
+
+======================================================================
+
+MODEL REPORT: weather_binary (Model 5)
+MODEL TYPE: LOGISTIC
+======================================================================
+Timestamp: 2025-12-02 16:54:24
+
+PREDICTORS (11):
+surface_type, Avg_Temp, Avg_Wind_MPH, Avg_Humidity_Percent, Avg_Percipitation_Prob_Percent, day, week, season, stadium, surface, dome
+
+CROSS-VALIDATION RESULTS (10-fold):
+  • Accuracy:         0.5373
+  • Precision:        0.2228
+  • Recall:           0.4446
+  • F1 Score:         0.2922
+  • ROC-AUC:          0.5437
+  • Log Loss:         0.6932
+
+TEST SET RESULTS:
+  • Accuracy:         0.3891
+  • Precision:        0.1987
+  • Recall:           0.7561
+  • F1 Score:         0.3147
+  • ROC-AUC:          0.5806
+  • Log Loss:         0.6915
+
+NAIVE BASELINE (Majority Class Predictor):
+  • Strategy: Always predict class 0 (most common class)
+  • Accuracy:         0.8145
+  • F1 Score:         0.0000
+  • ROC-AUC:          0.5000
+  
+  Model Improvement over Baseline:
+  • Accuracy:         -52.22%
+  • F1 Score:         N/A
+  • ROC-AUC:          +16.12%
+
+GENERALIZATION (Test/CV ratio):
+  • Accuracy:         0.7242
+  • ROC-AUC:          1.0678
+  • F1 Score:         1.0772
+  
+  Note: Ratio > 1.1 or < 0.9 suggests overfitting/underfitting
+
+======================================================================
