@@ -312,31 +312,6 @@ seaborn
 
 ---
 
-## License
-
-This project is licensed under the **GNU General Public License Version 3 (GPLv3)**.
-
-```
-Copyright (C) 2025 Ramon McDargh-Mitchell
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-```
-
-**Note:** Data usage should comply with NFL data policies. The GPLv3 license applies to the code and analysis methodology, not the underlying data.
-
----
-
 ## Contact
 
 For questions or collaboration opportunities, please contact:
