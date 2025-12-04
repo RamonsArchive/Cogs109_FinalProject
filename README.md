@@ -71,13 +71,15 @@ my-project/
 ## Models Implemented
 
 ### 1. **Poisson Regression**
+
 - **Purpose:** Models count data (number of injuries) using Poisson distribution
-- **Features:** 
+- **Features:**
   - Evaluated using Poisson Deviance and Pseudo-R² (McFadden's)
   - Handles overdispersion in count data
 - **Implementation:** `src/model.py`, `src/main.py`
 
 ### 2. **Linear Regression (OLS) with Log-Transformed Target**
+
 - **Purpose:** Models log-transformed injury counts using ordinary least squares
 - **Features:**
   - Uses R² and Adjusted R² for evaluation
@@ -85,6 +87,7 @@ my-project/
 - **Implementation:** `src/model.py`, `src/main.py`
 
 ### 3. **Logistic Regression (Binary Classification)**
+
 - **Purpose:** Predicts high-injury games (1 if num_injuries > 4, else 0)
 - **Features:**
   - Uses ROC-AUC, Accuracy, Precision, Recall, F1-Score
@@ -93,6 +96,7 @@ my-project/
 - **Implementation:** `src/model.py`, `src/main.py`
 
 ### 4. **Elastic Net Regression**
+
 - **Purpose:** Combines L1 (Lasso) and L2 (Ridge) regularization
 - **Features:**
   - Automatic feature selection via L1 regularization
@@ -102,6 +106,7 @@ my-project/
 - **Implementation:** `src/elastic_net.py`, `src/elastic_graphs.py`
 
 ### 5. **Gradient Boosting (XGBoost-style)**
+
 - **Purpose:** Ensemble method using gradient boosting for regression
 - **Features:**
   - Grid search with 10-fold cross-validation
@@ -111,6 +116,7 @@ my-project/
 - **Implementation:** `src/boosting.py`, `src/graph_boosting.py`
 
 ### 6. **Random Forest**
+
 - **Purpose:** Ensemble method using bagging with decision trees
 - **Features:**
   - Grid search with 10-fold cross-validation
@@ -119,6 +125,7 @@ my-project/
 - **Implementation:** `src/random_forest.py`, `src/graph_random_forest.py`
 
 ### 7. **Neural Networks (Multi-Layer Perceptron)**
+
 - **Purpose:** Deep learning approach using MLP Regressor
 - **Features:**
   - Grid search for architecture and hyperparameters
@@ -127,6 +134,7 @@ my-project/
 - **Implementation:** `src/neural_net.py`, `src/graph_neural_net.py`
 
 ### 8. **Polynomial Regression**
+
 - **Purpose:** Extends linear models with polynomial features
 - **Features:**
   - Tests polynomial degrees 1-4
@@ -139,8 +147,9 @@ my-project/
 ## Methodology
 
 ### Data Preprocessing
+
 - **Train/Test Split:** Single 80/20 split at the beginning to prevent data leakage
-- **Feature Encoding:** 
+- **Feature Encoding:**
   - Numerical features: StandardScaler
   - Categorical features: OneHotEncoder (drop='first')
 - **Target Transformations:**
@@ -149,13 +158,15 @@ my-project/
   - Binary classification (threshold: >4 injuries)
 
 ### Feature Selection
-- **Backward Elimination:** 
+
+- **Backward Elimination:**
   - Performed on logistic regression using Model 6 (kitchen sink)
   - Significance level: α = 0.1
   - Selected features applied to all model types
   - Prevents overfitting by removing non-significant predictors
 
 ### Model Evaluation
+
 - **Cross-Validation:** 10-fold KFold cross-validation on training set
 - **Hyperparameter Tuning:** GridSearchCV with 10-fold CV for:
   - Gradient Boosting
@@ -169,6 +180,7 @@ my-project/
   - **Logistic:** ROC-AUC, Accuracy, Precision, Recall, F1-Score, Log Loss
 
 ### Model Comparison
+
 - **7 Model Variants:** Baseline → Avg_Temp → Game Intensity → Rest/Travel → Weather → Kitchen Sink → Backward Selected
 - **Best Model Selection:** Based on 10-fold CV performance
   - Poisson: Lowest Poisson Deviance
@@ -182,6 +194,7 @@ my-project/
 ### Overall Findings
 
 Despite employing comprehensive modeling approaches with:
+
 - ✅ Extensive hyperparameter tuning via grid search
 - ✅ 10-fold cross-validation for robust evaluation
 - ✅ Backward feature selection to reduce overfitting
@@ -192,15 +205,18 @@ Despite employing comprehensive modeling approaches with:
 
 ### Key Observations
 
-1. **Low Predictive Power:** 
+1. **Low Predictive Power:**
+
    - Best models achieved R²/Pseudo-R² values typically below 20-30%
    - This indicates that most variance in injury counts is unexplained by available predictors
 
 2. **High Stochasticity:**
+
    - Injury occurrence appears highly random
    - Factors not captured in the dataset (player-specific, play-by-play dynamics, etc.) likely dominate
 
 3. **Model Performance:**
+
    - **Best Linear Model:** Log-transformed OLS with backward-selected features
    - **Best Poisson Model:** Kitchen sink or backward-selected features
    - **Best Logistic Model:** Various models with ROC-AUC ~0.55-0.60 (slightly better than random)
@@ -213,6 +229,7 @@ Despite employing comprehensive modeling approaches with:
 ### Interpretation
 
 The inability to achieve strong predictions suggests that:
+
 - Injury occurrence in NFL games is fundamentally stochastic
 - Important predictive factors may be missing from the dataset (e.g., player load, biomechanical factors, contact intensity)
 - The signal-to-noise ratio is too low for reliable prediction with current data
@@ -231,6 +248,7 @@ python main.py
 ```
 
 This will:
+
 1. Load and clean the data
 2. Perform backward feature selection
 3. Train all 7 model variants for Poisson, Linear, and Logistic regression
@@ -262,6 +280,7 @@ python exploratory.py
 ### Output
 
 All results are saved to the `plots/` directory:
+
 - **Best models:** `plots/best/`
 - **All model variants:** `plots/non_best/`
 - **Model-specific results:** `plots/{model_type}/`
@@ -295,17 +314,36 @@ seaborn
 
 ## License
 
-This project is for academic/research purposes. Data usage should comply with NFL data policies.
+This project is licensed under the **GNU General Public License Version 3 (GPLv3)**.
+
+```
+Copyright (C) 2024 Ramon McDargh-Mitchell
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+```
+
+**Note:** Data usage should comply with NFL data policies. The GPLv3 license applies to the code and analysis methodology, not the underlying data.
 
 ---
 
 ## Contact
 
 For questions or collaboration opportunities, please contact:
+
 - **Ramon McDargh-Mitchell:** cltuchdev.apps@gmail.com
 - **Portfolio:** https://clutchstudio.dev
 
 ---
 
-*Last Updated: December 2025*
-
+_Last Updated: December 2025_
